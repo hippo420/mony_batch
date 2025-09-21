@@ -18,7 +18,7 @@ public class StockBatchController {
     private final StockBatchService service;
 
     @GetMapping("/stock/fetchItem")
-    public void fetchItem(@RequestParam String basDd) {
+    public void fetchItem(@RequestParam(name="basDd") String basDd) {
         log.info("유가증권 목록 Fetch 컨트롤러");
         service.fetchItem(basDd);
 

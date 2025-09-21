@@ -6,6 +6,7 @@ import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
 
@@ -25,6 +26,10 @@ public class MetaDBConfig {
     @Bean
     public PlatformTransactionManager transactionManager(@Qualifier("dataSource")DataSource metaDataSource) {
         return new DataSourceTransactionManager(metaDataSource);
+    }
+    @Bean
+    public JdbcTemplate batchJdbcTemplate(@Qualifier("dataSource") DataSource dataSource) {
+        return new JdbcTemplate(dataSource);
     }
 
 }

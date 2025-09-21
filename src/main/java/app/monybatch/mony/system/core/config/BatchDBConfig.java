@@ -15,9 +15,9 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
 import java.util.HashMap;
+
 @Slf4j
 @Configuration
-//JAP Repository 스캔 패키지경로
 @EnableJpaRepositories(
         basePackages = "app.monybatch.mony.business.repository.jpa",
         entityManagerFactoryRef = "batchEntityManager",
@@ -31,6 +31,7 @@ public class BatchDBConfig {
         return DataSourceBuilder.create().build();
     }
 
+
     @Bean(name = "batchEntityManager")
     public LocalContainerEntityManagerFactoryBean batchEntityManager() {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
@@ -39,10 +40,11 @@ public class BatchDBConfig {
         em.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
 
         HashMap<String, Object> properties = new HashMap<>();
-        properties.put("hibernate.hbm2ddl.auto", "update");
+        properties.put("hibernate.hbm2ddl.auto", "update");       // 운영에서는 validate 권장
         properties.put("hibernate.show_sql", "false");
-        properties.put("hibernate.dialect", "org.hibernate.dialect.MySQLDialect");        em.setJpaPropertyMap(properties);
+        properties.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect"); // MySQL -> PostgreSQL
 
+        em.setJpaPropertyMap(properties);
         return em;
     }
 
@@ -51,5 +53,7 @@ public class BatchDBConfig {
             @Qualifier("batchEntityManager") EntityManagerFactory batchEntityManager) {
         return new JpaTransactionManager(batchEntityManager);
     }
+
+
 
 }

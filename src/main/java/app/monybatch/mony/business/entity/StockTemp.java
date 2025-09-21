@@ -8,6 +8,6 @@ import lombok.Setter;
 @Entity
 @Setter
 @Getter
-@Table(name ="info_stock")
-public class Stock extends BaseStock {
+@Table(name ="info_stock_temp")
+public class StockTemp extends BaseStock {
 }

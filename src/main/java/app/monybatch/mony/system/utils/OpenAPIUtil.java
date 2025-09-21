@@ -55,7 +55,7 @@ public class OpenAPIUtil {
                 .reduce(String::concat)
                 .block();
 
-        //log.info("API Response: {}",result);
+        log.info("API Response: {}",result);
 
         if (result == null || result.isEmpty()) {
             log.error("Empty response from API");
@@ -108,10 +108,10 @@ public class OpenAPIUtil {
                         .build())
                 .headers(headers -> {
                     if (Url.contains("data-dbg.krx.co.kr")) {
-                        //log.info("KEY = [{}]",StockConstant.KRX_API_KEY);
+                        log.info("KRX KEY = [{}]",StockConstant.KRX_API_KEY);
                         headers.add("AUTH_KEY", StockConstant.KRX_API_KEY);
                     } else if (Url.contains("opendart.fss.or.kr")) {
-                        //log.info("KEY = [{}]",StockConstant.DART_KEY);
+                        log.info("DART KEY = [{}]",StockConstant.DART_KEY);
                         headers.add("CRTFC_KEY", StockConstant.DART_KEY);
                     }
                 })

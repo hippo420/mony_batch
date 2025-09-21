@@ -46,9 +46,16 @@ public class OpenAPIReader<T> implements ItemReader<T> {
         }
         if (iterator == null) {
             JSONObject data = OpenAPIUtil.requestApiFromFile(KRX_STOCK_URL, "", params, DataType.DATA_JSON);
-            List<T> apiDataList  = JsonUtil.convert(new org.json.JSONObject(data.toJSONString()),keyCode, clazz);
-            log.info("주식종목 Fetch: {} 건", apiDataList.size());
-            iterator = apiDataList.iterator();
+
+            if(data != null) {
+                List<T> apiDataList  = JsonUtil.convert(new org.json.JSONObject(data.toJSONString()),keyCode, clazz);
+                log.info("Fetch: {} 건", apiDataList.size());
+                iterator = apiDataList.iterator();
+            }else {
+                log.info("Fetch결과 없음");
+                return null;
+            }
+
         }
 
         // 다음 항목이 있으면 반환, 없으면 null => chunk처리시 List로는 처리X, 단건으로 처리

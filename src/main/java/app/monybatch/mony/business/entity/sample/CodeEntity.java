@@ -7,7 +7,7 @@ import lombok.Setter;
 @Entity(name = "CODE_ENTITY")
 @Getter
 @Setter
-@Table(name = "CODE_ENTITY", schema = "BATCHDATA")
+@Table(name = "CODE_ENTITY")
 public class CodeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
