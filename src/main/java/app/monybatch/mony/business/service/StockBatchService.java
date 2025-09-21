@@ -22,12 +22,22 @@ public class StockBatchService {
     private final JobLauncher jobLauncher;
     private final JobRegistry jobRegistry;
 
-    public void fetchItem(String basDd){
+    public void fetchItem(String basDd, boolean forced){
         JobParameters jobParameters = null;
         try {
-            jobParameters = new JobParametersBuilder()
-                    .addString("basDd", basDd == null ? DateUtil.getDateYmd() : basDd)
-                    .toJobParameters();
+            if(forced)
+            {
+                jobParameters = new JobParametersBuilder()
+                        .addString("basDd", basDd == null ? DateUtil.getDateYmd() : basDd)
+                        .toJobParameters();
+
+            }else {
+                jobParameters = new JobParametersBuilder()
+                        .addString("basDd", basDd == null ? DateUtil.getDateYmd() : basDd)
+                        .addLong("forced.id", System.currentTimeMillis())
+                        .toJobParameters();
+
+            }
 
             jobLauncher.run(jobRegistry.getJob("itemJob"),jobParameters);
         }

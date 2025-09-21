@@ -20,7 +20,15 @@ public class StockBatchController {
     @GetMapping("/stock/fetchItem")
     public void fetchItem(@RequestParam(name="basDd") String basDd) {
         log.info("유가증권 목록 Fetch 컨트롤러");
-        service.fetchItem(basDd);
+        service.fetchItem(basDd,false);
+
+
+    }
+
+    @GetMapping("/stock/fetchItemForced")
+    public void fetchItemForced(@RequestParam(name="basDd") String basDd) {
+        log.info("유가증권 목록 Fetch 컨트롤러");
+        service.fetchItem(basDd,true);
 
 
     }
