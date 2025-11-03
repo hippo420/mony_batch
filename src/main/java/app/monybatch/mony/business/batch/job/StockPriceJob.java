@@ -87,7 +87,7 @@ public class StockPriceJob {
 
 
         MultiValueMap<String,String> params = new LinkedMultiValueMap<>();
-        params.add(BASDD,basDd);
+        params.add("basDd",basDd);
 
         return new OpenAPIReader<>(StockPrice.class, params,"KRX",PATH);
     }
