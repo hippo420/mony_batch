@@ -1,25 +1,29 @@
 package app.monybatch.mony.business.batch.job;
 
 import app.monybatch.mony.business.batch.reader.OpenAPIReader;
-import app.monybatch.mony.business.batch.writer.CustomJPAWriter;
 import app.monybatch.mony.business.entity.Stock;
 import app.monybatch.mony.business.entity.StockTemp;
 import app.monybatch.mony.business.repository.jpa.StockRepository;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.PersistenceUnit;
 import lombok.AllArgsConstructor;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.configuration.DuplicateJobException;
+import org.springframework.batch.core.configuration.JobRegistry;
 import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.batch.core.configuration.support.ReferenceJobFactory;
 import org.springframework.batch.core.job.DefaultJobParametersValidator;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
+import org.springframework.batch.item.database.JpaItemWriter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -32,14 +36,20 @@ import static app.monybatch.mony.business.constant.ColumnConst.BASDD;
 @AllArgsConstructor
 public class StockItemJob {
     private final JobRepository jobRepository;
-    private final PlatformTransactionManager transactionManager;
+    private final JobRegistry jobRegistry;
     private final StockRepository stockRepository;
+    private final String PATH = "/svc/apis/sto/stk_isu_base_info";
 
-    @PersistenceContext
-    private EntityManager entityManager;
+    @PersistenceUnit // 💡 EntityManagerFactory를 주입받습니다.
+    private EntityManagerFactory entityManagerFactory;
 
     @Bean
-    public DescriptiveJob itemJob() {
+    public PlatformTransactionManager jpaTransactionManager(EntityManagerFactory emf) {
+        return new JpaTransactionManager(emf);
+    }
+
+    @Bean
+    public DescriptiveJob itemJob() throws DuplicateJobException {
         DefaultJobParametersValidator validator = new DefaultJobParametersValidator();
         validator.setRequiredKeys(Collections.singletonList("basDd").toArray(new String[0]));
         validator.setOptionalKeys(new String[] { "param1","param2" });
@@ -50,7 +60,7 @@ public class StockItemJob {
                 .start(prebatchStep())
                 .next(batchStep())
                 .build();
-
+        jobRegistry.register(new ReferenceJobFactory(job));
         return new DescriptiveJob(job, "주식종목 동기화배치 처리");
     }
 
@@ -60,7 +70,7 @@ public class StockItemJob {
     public Step prebatchStep() {
 
         return new StepBuilder("prebatchStep",jobRepository)
-                .<StockTemp, StockTemp> chunk(100,transactionManager)
+                .<StockTemp, StockTemp> chunk(100,jpaTransactionManager(entityManagerFactory))
                 .reader(stockTempApiReader(null))
                 .processor(stockTempProcessor())
                 .writer(stockTempWriter())
@@ -72,7 +82,7 @@ public class StockItemJob {
     public Step batchStep() {
 
         return new StepBuilder("batchStep",jobRepository)
-                .<Stock, Stock> chunk(100,transactionManager)
+                .<Stock, Stock> chunk(100,jpaTransactionManager(entityManagerFactory))
                 .reader(stockApiReader(null))
                 .processor(stockProcessor())
                 .writer(stockWriter())
@@ -88,7 +98,7 @@ public class StockItemJob {
         MultiValueMap<String,String> params = new LinkedMultiValueMap<>();
         params.add(BASDD,basDd);
 
-        return new OpenAPIReader<>(StockTemp.class, params,"KRX");
+        return new OpenAPIReader<>(StockTemp.class, params,"KRX",PATH);
     }
 
 
@@ -101,7 +111,7 @@ public class StockItemJob {
         MultiValueMap<String,String> params = new LinkedMultiValueMap<>();
         params.add(BASDD,basDd);
 
-        return new OpenAPIReader<>(Stock.class, params,"KRX");
+        return new OpenAPIReader<>(Stock.class, params,"KRX",PATH);
     }
 
     //배치처리
@@ -131,16 +141,19 @@ public class StockItemJob {
     //쓰기
     @Bean
     @StepScope
-    public CustomJPAWriter<Stock> stockWriter(){
-
-        return new CustomJPAWriter<>(entityManager);
+    public JpaItemWriter<Stock> stockWriter(){
+        JpaItemWriter<Stock> writer = new JpaItemWriter<Stock>();
+        writer.setEntityManagerFactory(entityManagerFactory);
+        return writer;
     }
 
     //쓰기
     @Bean
     @StepScope
-    public CustomJPAWriter<StockTemp> stockTempWriter(){
+    public JpaItemWriter<StockTemp> stockTempWriter(){
 
-        return new CustomJPAWriter<>(entityManager);
+        JpaItemWriter<StockTemp> writer = new JpaItemWriter<StockTemp>();
+        writer.setEntityManagerFactory(entityManagerFactory);
+        return writer;
     }
 }

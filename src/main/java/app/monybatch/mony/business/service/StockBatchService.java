@@ -29,12 +29,12 @@ public class StockBatchService {
             {
                 jobParameters = new JobParametersBuilder()
                         .addString("basDd", basDd == null ? DateUtil.getDateYmd() : basDd)
+                        .addLong("forced.id", System.currentTimeMillis())
                         .toJobParameters();
 
             }else {
                 jobParameters = new JobParametersBuilder()
                         .addString("basDd", basDd == null ? DateUtil.getDateYmd() : basDd)
-                        .addLong("forced.id", System.currentTimeMillis())
                         .toJobParameters();
 
             }
@@ -47,5 +47,37 @@ public class StockBatchService {
             throw new RuntimeException(e);
         }
 
+    }
+
+    public void fetchPrice(String basDd, boolean forced) {
+
+        String today = DateUtil.getDateYmd();
+        //if(today.equals(basDd))
+
+        JobParameters jobParameters = null;
+        try {
+            if(forced)
+            {
+                jobParameters = new JobParametersBuilder()
+                        .addString("basDd", basDd == null ? DateUtil.getDateYmd() : basDd)
+                        .addLong("forced_id", System.currentTimeMillis())
+                        .toJobParameters();
+                log.info("Job Parameters: {}", jobParameters);
+
+            }else {
+                jobParameters = new JobParametersBuilder()
+                        .addString("basDd", basDd == null ? DateUtil.getDateYmd() : basDd)
+                        .toJobParameters();
+                log.info("Job Parameters: {}", jobParameters);
+
+            }
+
+            jobLauncher.run(jobRegistry.getJob("priceJob"),jobParameters);
+        }
+        catch (NoSuchJobException | JobInstanceAlreadyCompleteException | JobExecutionAlreadyRunningException |
+               JobRestartException | JobParametersInvalidException e) {
+            log.error("배치처리오류 {}",e.getMessage());
+            throw new RuntimeException(e);
+        }
     }
 }

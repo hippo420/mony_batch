@@ -30,5 +30,17 @@ public class StockBatchController {
         service.fetchItem(basDd,true);
 
     }
+    @GetMapping("/stock/fetchPrice")
+    public void fetchPrice(@RequestParam(name="basDd") String basDd) {
+        log.info("유가증권 종가 Fetch 컨트롤러 - 일자:[{}]",basDd);
+        service.fetchPrice(basDd,false);
 
+    }
+
+    @GetMapping("/stock/fetchPriceForced")
+    public void fetchPriceForced(@RequestParam(name="basDd") String basDd) {
+        log.info("유가증권 종가 Fetch 컨트롤러(강제) - 일자:[{}]",basDd);
+        service.fetchPrice(basDd,true);
+
+    }
 }

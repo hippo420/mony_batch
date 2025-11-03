@@ -23,13 +23,15 @@ public class OpenAPIReader<T> implements ItemReader<T> {
     private final Class<T> clazz; // 제너릭 타입 클래스
     private final String key;
     private final MultiValueMap<String,String> params;
+    private final String path;
 
     private Iterator<T> iterator;
 
-    public OpenAPIReader(Class<T> clazz, MultiValueMap<String,String> params ,String key) {
+    public OpenAPIReader(Class<T> clazz, MultiValueMap<String,String> params ,String key, String path) {
         this.clazz = clazz;
         this.params = params;
         this.key = key;
+        this.path = path;
     }
 
     @Override
@@ -45,7 +47,7 @@ public class OpenAPIReader<T> implements ItemReader<T> {
             keyCode = "OutBlock_2";
         }
         if (iterator == null) {
-            JSONObject data = OpenAPIUtil.requestApiFromFile(KRX_STOCK_URL, "", params, DataType.DATA_JSON);
+            JSONObject data = OpenAPIUtil.requestApiFromFile(KRX_STOCK_URL, path, params, DataType.DATA_JSON);
 
             if(data != null) {
                 List<T> apiDataList  = JsonUtil.convert(new org.json.JSONObject(data.toJSONString()),keyCode, clazz);
