@@ -3,6 +3,8 @@ package app.monybatch.mony.system.utils;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DateUtil {
     public static final String YYYYMM = "yyyyMM";
@@ -41,4 +43,21 @@ public class DateUtil {
 
         return  now.format(formatter);
     };
+
+    public static List<String> getDateListToToday(String startDateStr) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+
+        LocalDate startDate = LocalDate.parse(startDateStr, formatter).plusDays(1);
+        LocalDate endDate = LocalDate.now();
+
+        List<String> dateList = new ArrayList<>();
+        LocalDate current = startDate;
+
+        while (!current.isAfter(endDate)) {
+            dateList.add(current.format(formatter));
+            current = current.plusDays(1);
+        }
+
+        return dateList;
+    }
 }

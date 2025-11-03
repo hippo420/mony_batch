@@ -43,7 +43,7 @@ public class StockItemJob {
     @PersistenceUnit // 💡 EntityManagerFactory를 주입받습니다.
     private EntityManagerFactory entityManagerFactory;
 
-    @Bean
+    @Bean(name = "jpaTransactionManager1")
     public PlatformTransactionManager jpaTransactionManager(EntityManagerFactory emf) {
         return new JpaTransactionManager(emf);
     }
