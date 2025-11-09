@@ -4,8 +4,8 @@ import app.monybatch.mony.business.batch.reader.OpenAPIReader;
 import app.monybatch.mony.business.entity.Stock;
 import app.monybatch.mony.business.entity.StockTemp;
 import app.monybatch.mony.business.repository.jpa.StockRepository;
+import app.monybatch.mony.system.core.constant.DataType;
 import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.PersistenceUnit;
 import lombok.AllArgsConstructor;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
@@ -20,10 +20,10 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.database.JpaItemWriter;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -40,13 +40,10 @@ public class StockItemJob {
     private final StockRepository stockRepository;
     private final String PATH = "/svc/apis/sto/stk_isu_base_info";
 
-    @PersistenceUnit // 💡 EntityManagerFactory를 주입받습니다.
+    @Qualifier("batchEntityManager")
     private EntityManagerFactory entityManagerFactory;
+    private final PlatformTransactionManager batchTransactionManager;
 
-    @Bean(name = "jpaTransactionManager1")
-    public PlatformTransactionManager jpaTransactionManager(EntityManagerFactory emf) {
-        return new JpaTransactionManager(emf);
-    }
 
     @Bean
     public DescriptiveJob itemJob() throws DuplicateJobException {
@@ -70,7 +67,7 @@ public class StockItemJob {
     public Step prebatchStep() {
 
         return new StepBuilder("prebatchStep",jobRepository)
-                .<StockTemp, StockTemp> chunk(100,jpaTransactionManager(entityManagerFactory))
+                .<StockTemp, StockTemp> chunk(100,batchTransactionManager)
                 .reader(stockTempApiReader(null))
                 .processor(stockTempProcessor())
                 .writer(stockTempWriter())
@@ -82,7 +79,7 @@ public class StockItemJob {
     public Step batchStep() {
 
         return new StepBuilder("batchStep",jobRepository)
-                .<Stock, Stock> chunk(100,jpaTransactionManager(entityManagerFactory))
+                .<Stock, Stock> chunk(100,batchTransactionManager)
                 .reader(stockApiReader(null))
                 .processor(stockProcessor())
                 .writer(stockWriter())
@@ -98,7 +95,7 @@ public class StockItemJob {
         MultiValueMap<String,String> params = new LinkedMultiValueMap<>();
         params.add(BASDD,basDd);
 
-        return new OpenAPIReader<>(StockTemp.class, params,"KRX",PATH);
+        return new OpenAPIReader<>(StockTemp.class, params,"KRX",PATH, DataType.DATA_JSON);
     }
 
 
@@ -111,7 +108,7 @@ public class StockItemJob {
         MultiValueMap<String,String> params = new LinkedMultiValueMap<>();
         params.add(BASDD,basDd);
 
-        return new OpenAPIReader<>(Stock.class, params,"KRX",PATH);
+        return new OpenAPIReader<>(Stock.class, params,"KRX",PATH, DataType.DATA_JSON);
     }
 
     //배치처리

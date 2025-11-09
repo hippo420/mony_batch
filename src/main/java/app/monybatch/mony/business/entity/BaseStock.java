@@ -4,13 +4,21 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Column;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter @Setter
 @MappedSuperclass
 public class BaseStock extends CommonEntitiy {
     @Id
     @JsonProperty("ISU_CD")
     @Column(name ="ISU_CD")
     private String isuCd;
+
+
+    @JsonProperty("corp_code")
+    @Column(name ="corp_code")
+    private String CORP_CODE;
 
     @JsonProperty("ISU_SRT_CD")
     @Column(name ="ISU_SRT_CD")

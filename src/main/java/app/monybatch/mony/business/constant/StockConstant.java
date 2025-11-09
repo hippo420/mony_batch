@@ -18,6 +18,6 @@ public class StockConstant {
 
     //DART
     public static String DART_KEY;
-    public static String DART_ACCOUNT_URL = "https://opendart.fss.or.kr/api/fnlttSinglAcnt.json";
+    public static String DART_API_URL = "https://opendart.fss.or.kr";
 
 }

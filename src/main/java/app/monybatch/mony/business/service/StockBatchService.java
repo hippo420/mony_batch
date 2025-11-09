@@ -80,4 +80,32 @@ public class StockBatchService {
             throw new RuntimeException(e);
         }
     }
+
+    public void fetchMappring(boolean forced) {
+        JobParameters jobParameters = null;
+        try {
+            if(forced)
+            {
+                jobParameters = new JobParametersBuilder()
+                        .addString("basDd", DateUtil.getDateYmd())
+                        .addLong("forced_id", System.currentTimeMillis())
+                        .toJobParameters();
+                log.info("Job Parameters: {}", jobParameters);
+
+            }else {
+                jobParameters = new JobParametersBuilder()
+                        .addString("basDd", DateUtil.getDateYmd())
+                        .toJobParameters();
+                log.info("Job Parameters: {}", jobParameters);
+
+            }
+
+            jobLauncher.run(jobRegistry.getJob("dartJob"),jobParameters);
+        }
+        catch (NoSuchJobException | JobInstanceAlreadyCompleteException | JobExecutionAlreadyRunningException |
+               JobRestartException | JobParametersInvalidException e) {
+            log.error("배치처리오류 {}",e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
 }

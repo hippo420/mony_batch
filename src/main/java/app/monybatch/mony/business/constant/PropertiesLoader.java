@@ -14,4 +14,9 @@ public class PropertiesLoader {
     public void setDataApiKey(String value) {
         StockConstant.DOMESTIC_STOCK_KEY = value;
     }
+
+    @Value("${apikey.openapi.dart.key}")
+    public void setDartApiKey(String value) {
+        StockConstant.DART_KEY = value;
+    }
 }

@@ -43,4 +43,11 @@ public class StockBatchController {
         service.fetchPrice(basDd,true);
 
     }
+
+    @GetMapping("/stock/mapping")
+    public void mapDart() {
+        log.info("DART-KRX 종목매핑");
+        service.fetchMappring(true);
+
+    }
 }

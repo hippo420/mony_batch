@@ -10,7 +10,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Table(name="MAST_ACCT_DATA")
-public class DartFinData {
+public class DartDto {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long ID;

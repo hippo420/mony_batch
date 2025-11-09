@@ -13,46 +13,42 @@ import org.springframework.util.MultiValueMap;
 import java.util.Iterator;
 import java.util.List;
 
-import static app.monybatch.mony.business.constant.StockConstant.DART_API_URL;
 import static app.monybatch.mony.business.constant.StockConstant.KRX_STOCK_URL;
 
 @Slf4j
 @Component
 @StepScope
-public class OpenAPIReader<T> implements ItemReader<T> {
+public class DartAPIReader<T> implements ItemReader<T> {
 
     private final Class<T> clazz; // 제너릭 타입 클래스
     private final String key;
     private final MultiValueMap<String,String> params;
     private final String path;
-    private final DataType datatype;
+
     private Iterator<T> iterator;
 
-    public OpenAPIReader(Class<T> clazz, MultiValueMap<String,String> params ,String key, String path, DataType datatype) {
+    public DartAPIReader(Class<T> clazz, MultiValueMap<String,String> params , String key, String path) {
         this.clazz = clazz;
         this.params = params;
         this.key = key;
         this.path = path;
-        this.datatype = datatype;
     }
 
     @Override
     public T read() throws Exception {
-        String URL=null;
+
         String keyCode = null;
         if(this.key.equals("KRX"))
         {
             keyCode = "OutBlock_1";
-            URL=KRX_STOCK_URL;
         }
         else if(this.key.equals("DART"))
         {
             keyCode = "list";
-            URL=DART_API_URL;
         }
         if (iterator == null) {
-            JSONObject data = OpenAPIUtil.requestApiFromFile(URL, path, params, datatype);
-            //log.info("data= {}",data.toJSONString());
+            JSONObject data = OpenAPIUtil.requestApiFromFile(KRX_STOCK_URL, path, params, DataType.DATA_JSON);
+
             if(data != null) {
                 List<T> apiDataList  = JsonUtil.convert(new org.json.JSONObject(data.toJSONString()),keyCode, clazz);
                 log.info("Fetch: {} 건", apiDataList.size());
