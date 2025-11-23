@@ -1,6 +1,6 @@
 package app.monybatch.mony.business.batch.job;
 
-import app.monybatch.mony.business.batch.reader.OpenAPIReader;
+import app.monybatch.mony.business.batch.reader.OpenAPIItemReader;
 import app.monybatch.mony.business.entity.StockPrice;
 import app.monybatch.mony.business.repository.jpa.StockRepository;
 import app.monybatch.mony.system.core.constant.DataType;
@@ -79,13 +79,13 @@ public class StockPriceJob {
     //데이터 읽기
     @Bean
     @StepScope
-    public OpenAPIReader<StockPrice> stockPriceApiReader(@Value("#{jobParameters['basDd']}") String basDd) {
+    public OpenAPIItemReader<StockPrice> stockPriceApiReader(@Value("#{jobParameters['basDd']}") String basDd) {
 
 
         MultiValueMap<String,String> params = new LinkedMultiValueMap<>();
         params.add("basDd",basDd);
 
-        return new OpenAPIReader<>(StockPrice.class, params,"KRX",PATH, DataType.DATA_JSON);
+        return new OpenAPIItemReader<>(StockPrice.class, params,"KRX",PATH, DataType.DATA_JSON);
     }
 
     //배치처리

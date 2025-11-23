@@ -20,4 +20,13 @@ public class StockConstant {
     public static String DART_KEY;
     public static String DART_API_URL = "https://opendart.fss.or.kr";
 
+    //New
+    public static String NAVER_NEWS_API_ID;
+    public static String NAVER_NEWS_API_KEY;
+    public static String NAVER_NEWS_API_URL = "https://openapi.naver.com/v1/search/news.json";
+
+    //LLM
+    public static String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+    public static String GEMINI_API_KEY;
+
 }

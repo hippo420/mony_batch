@@ -55,6 +55,9 @@ public class OpenAPIUtil {
                         headers.add("AUTH_KEY", StockConstant.KRX_API_KEY);
                     } else if (Url.contains("opendart.fss.or.kr")) {
                         //headers.add("CRTFC_KEY", StockConstant.DART_KEY);
+                    } else if(Url.contains("openapi.naver.com")){
+                        headers.add("X-Naver-Client-Id", StockConstant.NAVER_NEWS_API_ID);
+                        headers.add("X-Naver-Client-Secret", StockConstant.NAVER_NEWS_API_KEY);
                     }
                 })
                 .retrieve()
@@ -144,6 +147,9 @@ public class OpenAPIUtil {
                     } else if (Url.contains("opendart.fss.or.kr")) {
                         log.info("DART KEY = [{}]",StockConstant.DART_KEY);
                         headers.add("CRTFC_KEY", StockConstant.DART_KEY);
+                    }else if(Url.contains("openapi.naver.com")){
+                        headers.add("X-Naver-Client-Id", StockConstant.NAVER_NEWS_API_ID);
+                        headers.add("X-Naver-Client-Secret", StockConstant.NAVER_NEWS_API_KEY);
                     }
                 })
                 .retrieve()

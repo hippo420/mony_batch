@@ -1,6 +1,6 @@
 package app.monybatch.mony.business.batch.job;
 
-import app.monybatch.mony.business.batch.reader.OpenAPIReader;
+import app.monybatch.mony.business.batch.reader.OpenAPIItemReader;
 import app.monybatch.mony.business.entity.Stock;
 import app.monybatch.mony.business.entity.dart.DartMapping;
 import app.monybatch.mony.business.repository.jpa.StockRepository;
@@ -72,9 +72,9 @@ public class DartMappingJob {
     //데이터 읽기
     @Bean
     @StepScope
-    public OpenAPIReader<DartMapping> dartApiReader() {
+    public OpenAPIItemReader<DartMapping> dartApiReader() {
         MultiValueMap<String,String> params = new LinkedMultiValueMap<>();
-        return new OpenAPIReader<>(DartMapping.class, params,"DART",PATH, DataType.DATA_ZIP);
+        return new OpenAPIItemReader<>(DartMapping.class, params,"DART",PATH, DataType.DATA_ZIP);
     }
 
     //배치처리

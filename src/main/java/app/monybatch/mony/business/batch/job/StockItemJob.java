@@ -1,6 +1,6 @@
 package app.monybatch.mony.business.batch.job;
 
-import app.monybatch.mony.business.batch.reader.OpenAPIReader;
+import app.monybatch.mony.business.batch.reader.OpenAPIItemReader;
 import app.monybatch.mony.business.entity.Stock;
 import app.monybatch.mony.business.entity.StockTemp;
 import app.monybatch.mony.business.repository.jpa.StockRepository;
@@ -89,26 +89,26 @@ public class StockItemJob {
     //데이터 읽기
     @Bean
     @StepScope
-    public OpenAPIReader<StockTemp> stockTempApiReader(@Value("#{jobParameters['basDd']}") String basDd) {
+    public OpenAPIItemReader<StockTemp> stockTempApiReader(@Value("#{jobParameters['basDd']}") String basDd) {
 
 
         MultiValueMap<String,String> params = new LinkedMultiValueMap<>();
         params.add(BASDD,basDd);
 
-        return new OpenAPIReader<>(StockTemp.class, params,"KRX",PATH, DataType.DATA_JSON);
+        return new OpenAPIItemReader<>(StockTemp.class, params,"KRX",PATH, DataType.DATA_JSON);
     }
 
 
     //데이터 읽기
     @Bean
     @StepScope
-    public OpenAPIReader<Stock> stockApiReader(@Value("#{jobParameters['basDd']}") String basDd) {
+    public OpenAPIItemReader<Stock> stockApiReader(@Value("#{jobParameters['basDd']}") String basDd) {
 
 
         MultiValueMap<String,String> params = new LinkedMultiValueMap<>();
         params.add(BASDD,basDd);
 
-        return new OpenAPIReader<>(Stock.class, params,"KRX",PATH, DataType.DATA_JSON);
+        return new OpenAPIItemReader<>(Stock.class, params,"KRX",PATH, DataType.DATA_JSON);
     }
 
     //배치처리

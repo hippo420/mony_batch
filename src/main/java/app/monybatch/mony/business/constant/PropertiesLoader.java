@@ -19,4 +19,19 @@ public class PropertiesLoader {
     public void setDartApiKey(String value) {
         StockConstant.DART_KEY = value;
     }
+
+    @Value("${apikey.openapi.news.key}")
+    public void setNewApiKey(String value) {
+        StockConstant.NAVER_NEWS_API_KEY = value;
+    }
+
+    @Value("${apikey.openapi.news.id}")
+    public void setNewApiId(String value) {
+        StockConstant.NAVER_NEWS_API_ID = value;
+    }
+
+    @Value("${apikey.gemini.api.key}")
+    public void setGeminiAPiKey(String value) {
+        StockConstant.GEMINI_API_KEY = value;
+    }
 }

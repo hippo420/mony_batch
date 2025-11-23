@@ -53,6 +53,11 @@ dependencies {
     implementation platform("com.fasterxml.jackson:jackson-bom:2.17.1")
     implementation "com.fasterxml.jackson.core:jackson-databind"
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-xml"
+    //Spring Data Elasticsearch 의존성
+    implementation 'org.springframework.data:spring-data-elasticsearch'
+
+    implementation("com.google.genai:google-genai:1.28.0")
+    implementation("com.google.cloud:google-cloud-vertexai:1.40.0")
 }
 
 dependencyManagement {

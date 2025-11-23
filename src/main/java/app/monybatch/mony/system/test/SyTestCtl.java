@@ -1,6 +1,6 @@
 package app.monybatch.mony.system.test;
 
-import app.monybatch.mony.business.batch.reader.OpenAPIReader;
+import app.monybatch.mony.business.batch.reader.OpenAPIListReader;
 import app.monybatch.mony.business.entity.Stock;
 import app.monybatch.mony.system.core.constant.DataType;
 import org.springframework.util.LinkedMultiValueMap;
@@ -18,6 +18,6 @@ public class SyTestCtl {
     public void baedang() throws Exception {
         MultiValueMap<String,String> params = new LinkedMultiValueMap<>();
         //params.add(BASDD,basDd);
-        List<Stock> resList = (List<Stock>) new OpenAPIReader<>(Stock.class, params,"DART","", DataType.DATA_ZIP).read();
+        List<Stock> resList = (List<Stock>) new OpenAPIListReader<>(Stock.class, params,"DART","", DataType.DATA_ZIP).read();
     }
 }
