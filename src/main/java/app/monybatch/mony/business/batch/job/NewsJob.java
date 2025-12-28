@@ -8,6 +8,7 @@ import app.monybatch.mony.business.entity.news.NewsArticle;
 import app.monybatch.mony.business.repository.jpa.NewsArticleRepository;
 import app.monybatch.mony.system.core.constant.DataType;
 import app.monybatch.mony.system.utils.DateUtil;
+import app.monybatch.mony.system.utils.HashUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
@@ -68,7 +69,7 @@ public class NewsJob {
 
         return new StepBuilder("batchNewsStep",jobRepository)
                 .<List<News>, List<NewsArticle>> chunk(10, batchTransactionManager)
-                .reader(newsApiReader(DateUtil.getDateYmd(),"경제+경기+물가+금리+환율+국채+원·달러")) // Reader 연결
+                .reader(newsApiReader(DateUtil.getDateYmd(),"SK하이닉스+반도체+HBM+AI")) // Reader 연결
                 .processor(newsArticleProcessor()) // Processor 연결
                 .writer(newsArticleWriter()) // Writer 연결
                 .transactionManager(batchTransactionManager)
@@ -85,7 +86,10 @@ public class NewsJob {
 
         MultiValueMap<String,String> params = new LinkedMultiValueMap<>();
 
-        params.add("query", "경제+경기+물가+금리+환율+국채+원·달러"); // 검색 키워드 파라미터 추가 가정
+        params.add("query", "SK하이닉스|반도체|HBM|AI"); // 검색 키워드 파라미터 추가 가정
+        params.add("display", "10"); // 검색 키워드 파라미터 추가 가정
+        params.add("start", "1"); // 검색 키워드 파라미터 추가 가정
+        params.add("sort", "date"); // 검색 키워드 파라미터 추가 가정
         log.info("params - basDd :{}, query: {}", basDd, keyword);
         // return new NewsApiItemReader(NewsArticle.class, params,"NAVER",API_PATH, DataType.DATA_JSON);
         // 실제 구현체는 API를 호출하고 NewsArticle 리스트를 반환해야 합니다.
@@ -130,6 +134,7 @@ public class NewsJob {
                     for (int i = 0; i < nextLine.length; i++) {
                         parseData = nextLine[i].split("\\|");
                         NewsArticle newsArticle = new NewsArticle();
+                        newsArticle.setId(HashUtil.generateMD5Hash(item.get(i).getOriginallink()));
                         newsArticle.setPublishedDate(parseData[0]);
                         newsArticle.setTitle(parseData[1]);
                         newsArticle.setContent(parseData[2]);
@@ -142,6 +147,7 @@ public class NewsJob {
                 }else{
                     parseData = result.split("\\|");
                     NewsArticle newsArticle = new NewsArticle();
+                    newsArticle.setId(HashUtil.generateMD5Hash(item.getFirst().getOriginallink()));
                     newsArticle.setPublishedDate(parseData[0]);
                     newsArticle.setTitle(parseData[1]);
                     newsArticle.setContent(parseData[2]);

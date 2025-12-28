@@ -1,7 +1,5 @@
 package app.monybatch.mony.business.entity.news;
 
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,20 +13,32 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
 
 public class NewsArticle {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    private String id;
+
     @Field(type = FieldType.Text)
     private String title;
+
     @Field(type = FieldType.Text)
     private String content;
+
+    @Field(type = FieldType.Text)
+    private String fullContent;
+
     @Field(type = FieldType.Text)
     private String opinion;
+
     @Field(type = FieldType.Text)
     private String keywords;
+
     @Field(type = FieldType.Text)
     private String rationale;
+
     @Field(type = FieldType.Date)
     private String publishedDate;
+
+    @Field(type = FieldType.Text)
+    private String category;
+
 
     @Override
     public String toString() {
@@ -36,9 +46,11 @@ public class NewsArticle {
                 "publishedDate='" + publishedDate + '\'' +
                 ", title='" + title + '\'' +
                 ", content='" + content + '\'' +
+                ", fullContent='" + fullContent + '\'' +
                 ", opinion='" + opinion + '\'' +
                 ", keywords='" + keywords + '\'' +
                 ", rationale='" + rationale + '\'' +
+                ", category='" + category + '\'' +
                 '}';
     }
     // 생성자, Getter, Setter (생략)

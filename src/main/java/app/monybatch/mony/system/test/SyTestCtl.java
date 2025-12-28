@@ -1,8 +1,11 @@
 package app.monybatch.mony.system.test;
 
 import app.monybatch.mony.business.batch.reader.OpenAPIListReader;
+import app.monybatch.mony.business.batch.service.GeminiApiClient;
 import app.monybatch.mony.business.entity.Stock;
+import app.monybatch.mony.business.entity.news.News;
 import app.monybatch.mony.system.core.constant.DataType;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -18,7 +21,9 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping("/test")
+@RequiredArgsConstructor
 public class SyTestCtl {
+    private final GeminiApiClient geminiApiClient;
 
     @RequestMapping("dart/baedang")
     public void baedang() throws Exception {
@@ -72,5 +77,17 @@ public class SyTestCtl {
         } catch (IOException e) {
             log.error("데이터 조회 중 오류 발생: {}", e.getMessage());
         }
+    }
+
+    @RequestMapping("/gemini")
+    public void getLLM(){
+        News news = new News();
+        news.setTitle("AI 거품론’에 환율 1480원 육박···연간 환율, 외환위기 때 기록도");
+        news.setDescription("이날 실적을 발표한 미국 반도체 기업 브로드컴이 AI수익이 적을 수 있다고 하고, 클라우드 기업 <b>오라클</b>... 지난 11일에도 연준의 금리인하를 반영해 환율이 1463.9원까지 떨어졌지만 <b>오라클</b>의 AI수익화 우려가... ");
+        news.setPubDate("Sun, 14 Dec 2025 17:10:00 +0900");
+        news.setOriginallink("https://www.khan.co.kr/article/202512141710001");
+        news.setLink("https://n.news.naver.com/mnews/article/032/0003415072?sid=101");
+        String response = geminiApiClient.requestSummaryAndSentimentOne(news);
+        log.info("response = {}", response);
     }
 }
