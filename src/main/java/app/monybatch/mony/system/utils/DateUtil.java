@@ -12,19 +12,47 @@ public class DateUtil {
     public static final String YYYYMMDDHHMMSS = "yyyyMMddHHmmss";
 
     /*
-     @Method
-     @Desc
+     @Method :
+     @Param :
+     @Desc :
      */
     public static String getDateYmd(){
         LocalDate now = LocalDate.now();
+
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(YYYYMMDD);
 
         return  now.format(formatter);
     };
 
     /*
-     @Method
-     @Desc
+     @Method :
+     @Param :
+     @Desc :
+     */
+    public static String getDateYmd(String format){
+        LocalDate now = LocalDate.now();
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format);
+
+        return  now.format(formatter);
+    };
+
+    /*
+     @Method :
+     @Param :
+     @Desc :
+     */
+    public static String getFormatDate(String date) {
+        if (date.length() == 8) {
+            return date.substring(0, 4) + "-" + date.substring(4, 6) + "-" + date.substring(6, 8);
+        }
+        return date;
+    }
+
+    /*
+     @Method : getDateMilli
+     @Param :
+     @Desc :
      */
     public static String getDateMilli(){
         LocalDateTime now = LocalDateTime.now();
@@ -34,8 +62,9 @@ public class DateUtil {
     };
 
     /*
-     @Method
-     @Desc
+     @Method : getDateYm
+     @Param :
+     @Desc :
      */
     public static String getDateYm(){
         LocalDate now = LocalDate.now();
@@ -44,6 +73,11 @@ public class DateUtil {
         return  now.format(formatter);
     };
 
+    /*
+     @Method : getDateYm
+     @Param :
+     @Desc :
+     */
     public static List<String> getDateListToToday(String startDateStr) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
 
