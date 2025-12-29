@@ -24,6 +24,7 @@ public class Report {
 
 
     @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
     private String basymd;
@@ -32,4 +33,11 @@ public class Report {
     private String itemName;
     private BigDecimal price;
     private Invest Type;
+    private String invest;
+    @Column(length = 2000)
+    private String pdfUrl;
+    private String pdfFilename;
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String content;
 }

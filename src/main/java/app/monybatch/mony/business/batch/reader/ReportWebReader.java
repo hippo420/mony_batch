@@ -14,6 +14,7 @@ import java.util.List;
 @Slf4j
 public class ReportWebReader implements ItemReader<List<ReportDto>> {
     private final String targetDate; // yyyy-MM-dd 형식
+    private boolean isRead = false;
 
     public ReportWebReader(String targetDate) {
         // 하이픈이 없는 경우(20250810)를 대비해 포맷팅 로직을 넣는 것이 좋습니다.
@@ -23,7 +24,9 @@ public class ReportWebReader implements ItemReader<List<ReportDto>> {
 
     @Override
     public List<ReportDto> read() throws Exception {
-
+        if (isRead) {
+            return null; // 중요: 이미 읽었다면 null을 반환해야 Step이 종료됨
+        }
 
         // sdate와 edate를 동일하게 설정하여 특정 날짜만 조회
         String url = String.format(
@@ -46,6 +49,7 @@ public class ReportWebReader implements ItemReader<List<ReportDto>> {
             parser.parseHtmlDetail(doc.toString(),rpt);
         }
 
+        isRead = true;
         return reports;
     }
 }

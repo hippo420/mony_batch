@@ -111,8 +111,11 @@ public class NaverStockParser implements ParserUtil<ReportDto>{
             if (priceEm != null)
             {
                 String price = priceEm.text();
-                if(price.isEmpty())
+                log.info("price: [{}]",price);
+                if(!price.isBlank() && !price.equals("없음"))
                     report.setTargetPrice(new BigDecimal(price.replaceAll(",", "")));
+                else
+                    report.setTargetPrice(BigDecimal.ZERO);
             }
             // 투자의견 추출
             Element opinionEm = infoBox.selectFirst("em.coment");
@@ -137,17 +140,7 @@ public class NaverStockParser implements ParserUtil<ReportDto>{
             String filename = createPdfFileName(report.getPubymd(),report.getCompany(),report.getItem(),report.getItemName());
             report.setPdfFilename(filename);
         }
-        log.info("--- 추출 결과 ---");
-        log.info("발행일자: {}", report.getPubymd());
-        log.info("증권사: {}", report.getCompany());
-        log.info("종목코드: {}", report.getItem());
-        log.info("종목명: {}", report.getItemName());
-        log.info("title : {}", report.getTitle());
-        log.info("투자의견: {}", report.getInvest());
-        log.info("목표주가: {}", report.getTargetPrice());
-        log.info("상세URL: {}", report.getUrl());
-        log.info("PDF URL: {}", report.getPdfUrl());
-        log.info("PDF URL: {}", report.getPdfFilename());
+
     }
 
 

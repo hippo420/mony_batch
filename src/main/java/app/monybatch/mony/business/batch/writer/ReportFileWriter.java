@@ -1,7 +1,8 @@
 package app.monybatch.mony.business.batch.writer;
 
-import app.monybatch.mony.business.batch.service.GeminiApiClient;
+import app.monybatch.mony.business.entity.report.Report;
 import app.monybatch.mony.business.entity.report.ReportDto;
+import app.monybatch.mony.business.repository.jpa.ReportRepository;
 import app.monybatch.mony.system.utils.MinioUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,19 +15,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @RequiredArgsConstructor
 @Slf4j
 public class ReportFileWriter implements ItemWriter<List<ReportDto>> {
 
-
     private final MinioUtil minioUtil;
-    private final GeminiApiClient geminiApiClient;
+    private final ReportRepository reportRepository;
     private final String savePath = "D:\\reports\\";
 
     @Override
@@ -36,6 +33,7 @@ public class ReportFileWriter implements ItemWriter<List<ReportDto>> {
 
 
         for (List<ReportDto> reportList : chunks) {
+            List<Report> reports = new ArrayList<>();
             for (ReportDto report : reportList) {
                 String safeName = report.getPdfFilename();
                 if(!safeName.isEmpty())
@@ -57,34 +55,35 @@ public class ReportFileWriter implements ItemWriter<List<ReportDto>> {
                     Files.delete(targetPath);
                     log.info("리포트 삭제 완료: {}", targetPath);
                 }
+                log.info("--- 추출 결과 ---");
+                log.info("발행일자: {}", report.getPubymd());
+                log.info("증권사: {}", report.getCompany());
+                log.info("종목코드: {}", report.getItem());
+                log.info("종목명: {}", report.getItemName());
+                log.info("제목 : {}", report.getTitle());
+                log.info("내용 : {}", report.getContent());
+                log.info("투자의견: {}", report.getInvest());
+                log.info("목표주가: {}", report.getTargetPrice());
+                log.info("상세URL: {}", report.getUrl());
+                log.info("PDF URL: {}", report.getPdfUrl());
+                log.info("PDF 파일명: {}", report.getPdfFilename());
+                Report rpt = new Report();
+                rpt.setBasymd(report.getPubymd());
+                rpt.setItem(report.getItem());
+                rpt.setItemName(report.getItemName());
+                rpt.setInvest(report.getInvest());
+                rpt.setCompany(report.getCompany());
+                rpt.setContent(report.getContent());
+                rpt.setPrice(report.getTargetPrice());
+                rpt.setPdfUrl(report.getPdfUrl());
+                rpt.setPdfFilename(report.getPdfFilename());
+                reports.add(rpt);
             }
             //String report = geminiApiClient.requestReportSummary(reports);
+            reportRepository.saveAll(reports);
         }
         log.info("PDF 파일 처리 : {}건 완료",chunks.size());
 
     }
 
-    public Map<String, String> extractFinancialInfo(String content) {
-        Map<String, String> result = new HashMap<>();
-
-        // 1. 목표가 추출 (숫자와 '원' 또는 'TP' 단어 조합 찾기)
-        Pattern pricePattern = Pattern.compile("(목표주가|TP|Target Price)\\s*[:]*\\s*([0-9,]+)\\s*원");
-        Matcher priceMatcher = pricePattern.matcher(content);
-        if (priceMatcher.find()) {
-            result.put("targetPrice", priceMatcher.group(2).replace(",", ""));
-        }
-
-
-        // 2. 투자의견 추출 (Buy, Hold, Strong Buy 등)
-        Pattern opinionPattern = Pattern.compile("(투자의견|Rating)\\s*[:]*\\s*(Buy|Hold|Sell|매수|보유|매도)", Pattern.CASE_INSENSITIVE);
-        Matcher opinionMatcher = opinionPattern.matcher(content);
-        if (opinionMatcher.find()) {
-            result.put("rating", opinionMatcher.group(2).toUpperCase());
-        }
-
-        log.info("목표가 : {}",result.get("targetPrice"));
-        log.info("투자의견 : {}",result.get("rating"));
-
-        return result;
-    }
 }

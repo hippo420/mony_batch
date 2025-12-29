@@ -4,6 +4,7 @@ import app.monybatch.mony.business.batch.reader.ReportWebReader;
 import app.monybatch.mony.business.batch.service.GeminiApiClient;
 import app.monybatch.mony.business.batch.writer.ReportFileWriter;
 import app.monybatch.mony.business.entity.report.ReportDto;
+import app.monybatch.mony.business.repository.jpa.ReportRepository;
 import app.monybatch.mony.system.utils.MinioUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +37,7 @@ public class ReportDownloadJob {
     private final JobRegistry jobRegistry;
     private final MinioUtil minioUtil;
     private final PlatformTransactionManager batchTransactionManager;
-
+    private final ReportRepository reportRepository;
     @Bean
     public DescriptiveJob reportCollectionJob() throws DuplicateJobException {
         DefaultJobParametersValidator validator = new DefaultJobParametersValidator();
@@ -57,7 +58,7 @@ public class ReportDownloadJob {
         return new StepBuilder("downloadReportStep", jobRepository)
                 .<List<ReportDto>, List<ReportDto>> chunk(1, batchTransactionManager) // 페이지 단위 처리
                 .reader(reportWebReader(null))
-                .writer(reportFileWriter(minioUtil,geminiApiClient))
+                .writer(reportFileWriter(minioUtil))
                 .transactionManager(batchTransactionManager)
                 .build();
     }
@@ -71,8 +72,8 @@ public class ReportDownloadJob {
 
     @Bean
     @StepScope
-    public ItemWriter<List<ReportDto>> reportFileWriter(MinioUtil minioUtil,GeminiApiClient geminiApiClient) {
-        return new ReportFileWriter(minioUtil,geminiApiClient);
+    public ItemWriter<List<ReportDto>> reportFileWriter(MinioUtil minioUtil) {
+        return new ReportFileWriter(minioUtil,reportRepository);
     }
 
 
