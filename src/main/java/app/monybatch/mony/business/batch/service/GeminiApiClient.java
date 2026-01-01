@@ -1,7 +1,10 @@
 package app.monybatch.mony.business.batch.service;
 
 import app.monybatch.mony.business.entity.news.News;
+import app.monybatch.mony.business.entity.report.Keyword;
 import app.monybatch.mony.business.entity.report.ReportDto;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.genai.Client;
 import com.google.genai.types.GenerateContentResponse;
 import jakarta.annotation.PostConstruct;
@@ -9,7 +12,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -189,5 +194,48 @@ public class GeminiApiClient {
             log.error("Gemini API 호출 오류: {}", e.getMessage(), e);
             throw new RuntimeException(e.getMessage());
         }
+    }
+
+    public Map<String,List<Keyword>> extractKeywords(String content)
+    {
+        // 1. 프롬프트 수정: JSON 형식을 표준 Map 구조인 { "key": value } 형태로 요청합니다.
+        String prompt = """
+        다음 리포트 내용에서 핵심 키워드 3개를 추출해줘
+        1) 종목명 제외, 회사명 제외.
+        2) 긍정도(0.0~1.0)를 추출해줘, 0.5가 기준값임
+        3) 반드시 아래 표준 JSON 객체 형식으로만 응답해.
+           응답 형식: {"종목코드": [{"keyword": "단어", "score": 0.9}, ...], "종목코드2": [...]}
+        4) 입력 데이터 형식: 종목코드:리포트내용|종목코드:리포트내용...
+        내용:
+        """ + content;
+
+            try {
+                // ★ Gemini API 호출
+                GenerateContentResponse response = client.models.generateContent(
+                        "gemini-2.5-flash", // 현재 사용 가능한 최신 모델명 확인 필요
+                        prompt,
+                        null
+                );
+
+                String result = response.text() != null ? response.text().trim() : "";
+
+                // 마크다운 코드 블록(```json) 제거
+                if (result.contains("```")) {
+                    result = result.replaceAll("(?s)```(?:json)?|```", "").trim();
+                }
+
+                log.info("Gemini 추출 결과: {}", result);
+
+                // 2. Jackson을 사용하여 Map<String, List<Keyword>>로 변환
+                ObjectMapper objectMapper = new ObjectMapper();
+
+                // TypeReference를 사용하여 명확하게 HashMap 구조로 읽어옵니다.
+                return objectMapper.readValue(result, new TypeReference<Map<String, List<Keyword>>>() {});
+
+            } catch (Exception e) {
+                log.error("Gemini API 호출 및 파싱 오류: {}", e.getMessage(), e);
+                return new HashMap<>(); // 에러 발생 시 빈 맵 반환 혹은 예외 처리
+            }
+
     }
 }

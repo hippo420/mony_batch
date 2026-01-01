@@ -1,7 +1,7 @@
 package app.monybatch.mony.business.batch.writer;
 
 import app.monybatch.mony.business.entity.news.NewsArticle;
-import app.monybatch.mony.business.repository.jpa.NewsArticleRepository;
+import app.monybatch.mony.business.repository.es.NewsArticleRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.Chunk;

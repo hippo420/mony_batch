@@ -5,7 +5,7 @@ import app.monybatch.mony.business.batch.service.GeminiApiClient;
 import app.monybatch.mony.business.batch.writer.NewsElasticsearchItemWriter;
 import app.monybatch.mony.business.entity.news.News;
 import app.monybatch.mony.business.entity.news.NewsArticle;
-import app.monybatch.mony.business.repository.jpa.NewsArticleRepository;
+import app.monybatch.mony.business.repository.es.NewsArticleRepository;
 import app.monybatch.mony.system.core.constant.DataType;
 import app.monybatch.mony.system.utils.DateUtil;
 import app.monybatch.mony.system.utils.HashUtil;

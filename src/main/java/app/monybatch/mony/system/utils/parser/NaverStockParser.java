@@ -12,6 +12,9 @@ import org.jsoup.select.Elements;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 @Slf4j
 public class NaverStockParser implements ParserUtil<ReportDto>{
     private final String UNDER_SCORE = "_";
@@ -80,6 +83,8 @@ public class NaverStockParser implements ParserUtil<ReportDto>{
     public void parseHtmlDetail(String data, ReportDto report) {
 
         Document doc = Jsoup.parse(data);
+
+
         // --- 1번 추출: 종목명, 제목, 증권사 ---
         Element header = doc.selectFirst("th.view_sbj");
         if (header != null) {
@@ -111,7 +116,7 @@ public class NaverStockParser implements ParserUtil<ReportDto>{
             if (priceEm != null)
             {
                 String price = priceEm.text();
-                log.info("price: [{}]",price);
+
                 if(!price.isBlank() && !price.equals("없음"))
                     report.setTargetPrice(new BigDecimal(price.replaceAll(",", "")));
                 else
@@ -141,6 +146,35 @@ public class NaverStockParser implements ParserUtil<ReportDto>{
             report.setPdfFilename(filename);
         }
 
+    }
+
+    public static int getTotalPage(Document doc) {
+        // 1. '맨뒤' 버튼 요소 찾기 (클래스 pgRR)
+        Element lastPageBtn = doc.selectFirst("td.pgRR a");
+
+        if (lastPageBtn != null) {
+            String href = lastPageBtn.attr("href");
+
+            // 2. 정규표현식을 사용하여 page= 뒤의 숫자 추출
+            Pattern pattern = Pattern.compile("page=(\\d+)");
+            Matcher matcher = pattern.matcher(href);
+
+            if (matcher.find()) {
+                return Integer.parseInt(matcher.group(1));
+            }
+        }
+
+        // 3. 만약 '맨뒤' 버튼이 없다면, 현재 보이는 페이지 번호 중 가장 큰 값 찾기
+        Element lastNumElement = doc.select("td:not(.pgRR) a").last();
+        if (lastNumElement != null) {
+            try {
+                return Integer.parseInt(lastNumElement.text().trim());
+            } catch (NumberFormatException e) {
+                return 1;
+            }
+        }
+
+        return 1; // 기본값
     }
 
 

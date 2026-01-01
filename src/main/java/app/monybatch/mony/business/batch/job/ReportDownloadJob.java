@@ -4,6 +4,7 @@ import app.monybatch.mony.business.batch.reader.ReportWebReader;
 import app.monybatch.mony.business.batch.service.GeminiApiClient;
 import app.monybatch.mony.business.batch.writer.ReportFileWriter;
 import app.monybatch.mony.business.entity.report.ReportDto;
+import app.monybatch.mony.business.repository.es.ReportEsRepository;
 import app.monybatch.mony.business.repository.jpa.ReportRepository;
 import app.monybatch.mony.system.utils.MinioUtil;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,8 @@ public class ReportDownloadJob {
     private final MinioUtil minioUtil;
     private final PlatformTransactionManager batchTransactionManager;
     private final ReportRepository reportRepository;
+    private final ReportEsRepository reportEsRepository;
+
     @Bean
     public DescriptiveJob reportCollectionJob() throws DuplicateJobException {
         DefaultJobParametersValidator validator = new DefaultJobParametersValidator();
@@ -73,7 +76,7 @@ public class ReportDownloadJob {
     @Bean
     @StepScope
     public ItemWriter<List<ReportDto>> reportFileWriter(MinioUtil minioUtil) {
-        return new ReportFileWriter(minioUtil,reportRepository);
+        return new ReportFileWriter(minioUtil,reportRepository,reportEsRepository,geminiApiClient);
     }
 
 

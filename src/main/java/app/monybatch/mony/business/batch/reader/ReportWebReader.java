@@ -9,7 +9,10 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.batch.item.ItemReader;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import static app.monybatch.mony.system.utils.parser.NaverStockParser.getTotalPage;
 
 @Slf4j
 public class ReportWebReader implements ItemReader<List<ReportDto>> {
@@ -28,10 +31,11 @@ public class ReportWebReader implements ItemReader<List<ReportDto>> {
             return null; // 중요: 이미 읽었다면 null을 반환해야 Step이 종료됨
         }
 
+        int curPage = 1;
         // sdate와 edate를 동일하게 설정하여 특정 날짜만 조회
         String url = String.format(
                 ReportConst.NAVER_REPORT_URL,
-                targetDate, targetDate
+                targetDate, targetDate,curPage
         );
 
         log.info("특정 날짜 리포트 조회 중: {}", url);
@@ -39,8 +43,25 @@ public class ReportWebReader implements ItemReader<List<ReportDto>> {
         Document doc = Jsoup.connect(url)
                 .userAgent("Mozilla/5.0")
                 .get();
+
+        int totalPage = getTotalPage(doc);
         NaverStockParser parser = new NaverStockParser();
-        List<ReportDto> reports = parser.parseHtml(doc.toString(),this.targetDate);
+        List<ReportDto> reports = new ArrayList<>();
+        for(int i = curPage; i <= totalPage;i++)
+        {
+            url = String.format(
+                    ReportConst.NAVER_REPORT_URL,
+                    targetDate, targetDate,i
+            );
+
+            doc = Jsoup.connect(url)
+                    .userAgent("Mozilla/5.0")
+                    .get();
+
+            reports.addAll(parser.parseHtml(doc.toString(),this.targetDate));
+
+        }
+
         for(ReportDto rpt: reports)
         {
             doc = Jsoup.connect(rpt.getUrl())
@@ -48,6 +69,7 @@ public class ReportWebReader implements ItemReader<List<ReportDto>> {
                     .get();
             parser.parseHtmlDetail(doc.toString(),rpt);
         }
+        log.info("리포트 {}건 완료",reports.size());
 
         isRead = true;
         return reports;

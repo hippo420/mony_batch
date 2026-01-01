@@ -1,26 +1,64 @@
 package app.monybatch.mony.business.document;
 
+import app.monybatch.mony.business.entity.report.Keyword;
 import jakarta.persistence.Id;
-import lombok.Builder;
-import lombok.Getter;
+import lombok.*;
+import org.springframework.data.elasticsearch.annotations.DateFormat;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 
+import java.util.List;
+
 @Document(indexName = "reports")
 @Getter
+@Setter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ReportIndex {
+
     @Id
     private String id;
+
+    @Field(type = FieldType.Text, analyzer = "nori")
     private String title;
+
+    @Field(type = FieldType.Keyword)
     private String author;
+
+    @Field(type = FieldType.Keyword)
     private String company;
+
+    @Field(type = FieldType.Keyword)
     private String category;
 
-    @Field(type = FieldType.Text, analyzer = "nori") // 한글 분석기 설정
-    private String content; // PDF에서 추출한 비정형 텍스트 데이터
+    @Field(type = FieldType.Text, analyzer = "nori")
+    private String content;
+
+    // --- 추가된 핵심 필드 ---
+
+    /**
+     * LLM에서 추출한 핵심 키워드 리스트
+     * 집계(Aggregation)를 위해 FieldType.Keyword를 사용합니다.
+     */
+    @Field(type = FieldType.Nested)
+    private List<Keyword> keywords;
+
+    /**
+     * 리포트 날짜 (날짜 형식을 명시하여 정렬 및 기간 조회를 용이하게 함)
+     */
+    @Field(type = FieldType.Date, format = DateFormat.date_optional_time)
+    private String reportDate;
 
     private String minioUrl;
-    private String reportDate;
+
+    /**
+     * 추가하면 좋은 필드: 종목코드 (종목 검색 연동용)
+     */
+    @Field(type = FieldType.Keyword)
+    private String itemCode;
+
+    @Field(type = FieldType.Keyword)
+    private String itemName;
 }
