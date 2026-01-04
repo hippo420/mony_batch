@@ -104,7 +104,7 @@ public class NaverStockParser implements ParserUtil<ReportDto>{
             }
 
             // 남은 텍스트가 리포트 제목
-            report.setTitle(header.text().trim());
+            report.setTitle(header.text().replaceAll("\\s+", " ").trim());
         }
 
         // --- 2번 추출: 목표가, 투자의견 ---

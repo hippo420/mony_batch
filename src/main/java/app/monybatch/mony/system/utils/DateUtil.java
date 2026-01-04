@@ -49,6 +49,7 @@ public class DateUtil {
         return date;
     }
 
+
     /*
      @Method : getDateMilli
      @Param :
@@ -94,4 +95,28 @@ public class DateUtil {
 
         return dateList;
     }
+
+    /*
+     @Method : getDateYm
+     @Param :
+     @Desc :
+     */
+    public static String getMinusDay(String curYmd,int days){
+        // 1. yyyyMMdd 형식의 포맷터 생성
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(YYYYMMDD);
+
+        try {
+            // 2. 입력받은 문자열을 LocalDate로 변환
+            LocalDate date = LocalDate.parse(curYmd, formatter);
+
+            // 3. 날짜 차감 계산
+            LocalDate resultDate = date.minusDays(days);
+
+            // 4. 다시 yyyyMMdd 형식의 문자열로 변환하여 반환
+            return resultDate.format(formatter);
+        } catch (Exception e) {
+            // 날짜 형식이 잘못되었을 경우 예외 처리
+            throw new IllegalArgumentException("날짜 형식이 올바르지 않습니다 (yyyyMMdd 필요): " + curYmd);
+        }
+    };
 }

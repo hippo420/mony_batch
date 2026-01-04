@@ -3,7 +3,6 @@ package app.monybatch.mony.business.document;
 import app.monybatch.mony.business.entity.report.Keyword;
 import jakarta.persistence.Id;
 import lombok.*;
-import org.springframework.data.elasticsearch.annotations.DateFormat;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
@@ -42,13 +41,13 @@ public class ReportIndex {
      * LLM에서 추출한 핵심 키워드 리스트
      * 집계(Aggregation)를 위해 FieldType.Keyword를 사용합니다.
      */
-    @Field(type = FieldType.Nested)
+    @Field(type = FieldType.Object)
     private List<Keyword> keywords;
 
     /**
      * 리포트 날짜 (날짜 형식을 명시하여 정렬 및 기간 조회를 용이하게 함)
      */
-    @Field(type = FieldType.Date, format = DateFormat.date_optional_time)
+    @Field(type = FieldType.Date)
     private String reportDate;
 
     private String minioUrl;

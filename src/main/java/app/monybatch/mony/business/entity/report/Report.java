@@ -31,6 +31,7 @@ public class Report {
     private String company;
     private String item;
     private String itemName;
+    private String title;
     private BigDecimal price;
     private Invest Type;
     private String invest;
