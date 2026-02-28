@@ -47,7 +47,7 @@ public class DartAPIReader<T> implements ItemReader<T> {
             keyCode = "list";
         }
         if (iterator == null) {
-            JSONObject data = OpenAPIUtil.requestApiFromFile(KRX_STOCK_URL, path, params, DataType.DATA_JSON);
+            JSONObject data = OpenAPIUtil.requestApiFromFile(KRX_STOCK_URL, path, params, null, DataType.DATA_JSON);
 
             if(data != null) {
                 List<T> apiDataList  = JsonUtil.convert(new org.json.JSONObject(data.toJSONString()),keyCode, clazz);

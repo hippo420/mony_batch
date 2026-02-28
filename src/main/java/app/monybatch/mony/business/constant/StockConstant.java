@@ -29,4 +29,11 @@ public class StockConstant {
     public static String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
     public static String GEMINI_API_KEY;
 
+    //한국투자증권
+    public static String KIS_API_URL = "https://openapi.koreainvestment.com:9443";
+    public static String KIS_TOKEN_PATH = "/oauth2/tokenP";
+    public static String KIS_REVOKE_PATH = "/oauth2/revokeP";
+    public static String KIS_API_KEY;
+    public static String KIS_API_SECRET;
+
 }

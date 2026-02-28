@@ -9,6 +9,9 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 
+/**
+ * 유가증권 종목기본정보
+ */
 @Entity
 @Table(name = "STOCK_PRICE")
 @IdClass(StockPriceId.class)

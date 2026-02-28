@@ -17,7 +17,6 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -25,6 +24,7 @@ import java.nio.channels.AsynchronousFileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 
@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 public class OpenAPIUtil {
 
 
-    public static JSONObject requestApi(String Url, String path, MultiValueMap<String,String> params, DataType resultType)  {
+    public static JSONObject requestApi(String Url, String path, MultiValueMap<String,String> params, Map<String, String> customHeaders, DataType resultType)  {
 
 
         WebClient webClient = WebClient.builder()
@@ -44,13 +44,18 @@ public class OpenAPIUtil {
         if (Url.contains("opendart.fss.or.kr")) {
             params.add("crtfc_key", StockConstant.DART_KEY);
         }
-
+        customHeaders.forEach((key, value) ->
+                log.info("[HEADER] {}={}", key, value)
+        );
         String result =  webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path(path)
                         .queryParams(params)
                         .build())
                 .headers(headers -> {
+                    if (customHeaders != null) {
+                        customHeaders.forEach(headers::add);
+                    }
                     if (Url.contains("data-dbg.krx.co.kr")) {
                         headers.add("AUTH_KEY", StockConstant.KRX_API_KEY);
                     } else if (Url.contains("opendart.fss.or.kr")) {
@@ -93,7 +98,7 @@ public class OpenAPIUtil {
         //return result;
     }
 
-    public static JSONObject requestApiFromFile(String Url, String path, MultiValueMap<String, String> params, DataType resultType) {
+    public static JSONObject requestApiFromFile(String Url, String path, MultiValueMap<String, String> params, Map<String, String> customHeaders, DataType resultType) {
 
         if (Url.contains("opendart.fss.or.kr")) {
             params.add("crtfc_key", StockConstant.DART_KEY);
@@ -128,41 +133,70 @@ public class OpenAPIUtil {
             }
 
             tempFile = Files.createTempFile("api-response-", extension);
-            log.info("임시파일생성 : {}",tempFile.toString());
+            //log.info("임시파일생성 : {}",tempFile.toString());
         } catch (IOException e) {
             log.error("파일 생성 실패", e);
             throw new RuntimeException("파일 생성 실패", e);
         }
-        log.info("URL: {}",Url+path);
-        params.entrySet().stream().forEach(entry -> {log.info("key: {}",entry.getKey());log.info("value: {}",entry.getValue());});
-        Flux<DataBuffer> dataBufferFlux = webClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path(path)
-                        .queryParams(params)
-                        .build())
-                .headers(headers -> {
-                    if (Url.contains("data-dbg.krx.co.kr")) {
-                        log.info("KRX KEY = [{}]",StockConstant.KRX_API_KEY);
-                        headers.add("AUTH_KEY", StockConstant.KRX_API_KEY);
-                    } else if (Url.contains("opendart.fss.or.kr")) {
-                        log.info("DART KEY = [{}]",StockConstant.DART_KEY);
-                        headers.add("CRTFC_KEY", StockConstant.DART_KEY);
-                    }else if(Url.contains("openapi.naver.com")){
-                        headers.add("X-Naver-Client-Id", StockConstant.NAVER_NEWS_API_ID);
-                        headers.add("X-Naver-Client-Secret", StockConstant.NAVER_NEWS_API_KEY);
-                    }
-                })
-                .retrieve()
-                .bodyToFlux(DataBuffer.class);
 
-        try (AsynchronousFileChannel channel = AsynchronousFileChannel.open(tempFile, StandardOpenOption.WRITE)) {
-            Mono<Void> writeMono = DataBufferUtils.write(dataBufferFlux, channel, 0).then();
-            writeMono.block();// 전체 스트림을 파일로 저장
+        //log.info("URL: {}",Url+path);
+        long startTime = System.currentTimeMillis();
+        //customHeaders.forEach((key, value) -> log.info("[HEADER] [{}]=[{}]", key, value));
+        //params.entrySet().forEach(entry -> {log.info("[Param] key: {}, value : {}",entry.getKey(),entry.getValue());});
+
+        Flux<DataBuffer> dataBufferFlux =
+                webClient.get()
+                        .uri(uriBuilder -> uriBuilder
+                                .path(path)
+                                .queryParams(params)
+                                .build())
+                        .headers(headers -> {
+                            if (customHeaders != null) {
+                                customHeaders.forEach(headers::add);
+                            }
+
+                            if (Url.contains("data-dbg.krx.co.kr")) {
+                                log.info("KRX KEY = [{}]", StockConstant.KRX_API_KEY);
+                                headers.add("AUTH_KEY", StockConstant.KRX_API_KEY);
+
+                            } else if (Url.contains("opendart.fss.or.kr")) {
+                                log.info("DART KEY = [{}]", StockConstant.DART_KEY);
+                                headers.add("CRTFC_KEY", StockConstant.DART_KEY);
+
+                            } else if (Url.contains("openapi.naver.com")) {
+                                headers.add("X-Naver-Client-Id", StockConstant.NAVER_NEWS_API_ID);
+                                headers.add("X-Naver-Client-Secret", StockConstant.NAVER_NEWS_API_KEY);
+                            }
+                        })
+                        .retrieve()
+                        .bodyToFlux(DataBuffer.class)
+                        // 🔥 핵심 1: downstream cancel / error 시 DataBuffer 해제
+                        .doOnDiscard(DataBuffer.class, DataBufferUtils::release);
+
+        try (AsynchronousFileChannel channel =
+                     AsynchronousFileChannel.open(
+                             tempFile,
+                             StandardOpenOption.WRITE,
+                             StandardOpenOption.CREATE,
+                             StandardOpenOption.TRUNCATE_EXISTING
+                     )) {
+
+            //  핵심 2: write 후 DataBuffer 자동 release
+            DataBufferUtils.write(
+                    dataBufferFlux,
+                    tempFile,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING,
+                    StandardOpenOption.WRITE
+            ).block();
+
         } catch (IOException e) {
             log.error("파일 저장 중 오류", e);
             throw new RuntimeException("파일 저장 실패", e);
         }
 
+        long endTime = System.currentTimeMillis();
+        log.info("API-execTime = {}ms",endTime-startTime);
         //압축파일의 경우 압출해제후 파일 읽기
         if(resultType == DataType.DATA_ZIP) {
             // System.getProperty()를 사용하여 임시 디렉터리 경로를 가져옵니다.

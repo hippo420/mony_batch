@@ -2,7 +2,9 @@ package app.monybatch.mony.business.constant;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
-
+/*
+ *@DESC config서버로 부터 값을 받아 상수에 set하는 로더클래스
+ */
 @Configuration
 public class PropertiesLoader {
     @Value("${apikey.openapi.krx.key}")
@@ -33,5 +35,15 @@ public class PropertiesLoader {
     @Value("${apikey.gemini.api.key}")
     public void setGeminiAPiKey(String value) {
         StockConstant.GEMINI_API_KEY = value;
+    }
+
+    @Value("${apikey.kis.dev.app.key}")
+    public void setKISAPiKey(String value) {
+        StockConstant.KIS_API_KEY = value;
+    }
+
+    @Value("${apikey.kis.dev.app.secret}")
+    public void setKISAPiSecret(String value) {
+        StockConstant.KIS_API_SECRET = value;
     }
 }

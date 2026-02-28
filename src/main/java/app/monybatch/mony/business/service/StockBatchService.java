@@ -108,4 +108,102 @@ public class StockBatchService {
             throw new RuntimeException(e);
         }
     }
+
+    public void fetchDartInfo(String basDd, boolean forced) {
+        JobParameters jobParameters = null;
+        try {
+            if(forced)
+            {
+                jobParameters = new JobParametersBuilder()
+                        .addString("basDd", DateUtil.getDateYmd())
+                        .addLong("forced_id", System.currentTimeMillis())
+                        .toJobParameters();
+                log.info("Job Parameters: {}", jobParameters);
+
+            }else {
+                jobParameters = new JobParametersBuilder()
+                        .addString("basDd", DateUtil.getDateYmd())
+                        .toJobParameters();
+                log.info("Job Parameters: {}", jobParameters);
+
+            }
+
+            jobLauncher.run(jobRegistry.getJob("fetchDartInfoJob"),jobParameters);
+        }
+        catch (NoSuchJobException | JobInstanceAlreadyCompleteException | JobExecutionAlreadyRunningException |
+               JobRestartException | JobParametersInvalidException e) {
+            log.error("배치처리오류 {}",e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void fetchDartAcct(String corp_code, String bsns_year, boolean forced) {
+        String[] rpt = {"11014","11013","11012","11011"};
+
+        for(int i=0;i<4;i++)
+        {
+            JobParameters jobParameters = null;
+            try {
+                if(forced)
+                {
+                    jobParameters = new JobParametersBuilder()
+                            .addString("corp_code", corp_code)
+                            .addString("bsns_year", bsns_year)
+                            .addString("reprt_code", rpt[i])
+                            .addLong("forced_id", System.currentTimeMillis())
+                            .toJobParameters();
+                    log.info("Job Parameters: {}", jobParameters);
+
+                }else {
+                    jobParameters = new JobParametersBuilder()
+                            .addString("corp_code", corp_code)
+                            .addString("bsns_year", bsns_year)
+                            .addString("reprt_code", rpt[i])
+                            .toJobParameters();
+                    log.info("Job Parameters: {}", jobParameters);
+
+                }
+
+                jobLauncher.run(jobRegistry.getJob("fetchDartAcctJob"),jobParameters);
+            }
+            catch (NoSuchJobException | JobInstanceAlreadyCompleteException | JobExecutionAlreadyRunningException |
+                   JobRestartException | JobParametersInvalidException e) {
+                log.error("배치처리오류 {}",e.getMessage());
+                throw new RuntimeException(e);
+            }
+        }
+
+    }
+
+    public void fetchInvestorTrade(String basDd, boolean forced) {
+
+
+        JobParameters jobParameters = null;
+        try {
+            if(forced)
+            {
+                jobParameters = new JobParametersBuilder()
+                        .addString("basDd", basDd)
+                        .addLong("forced_id", System.currentTimeMillis())
+                        .toJobParameters();
+                log.info("Job Parameters: {}", jobParameters);
+
+            }else {
+                jobParameters = new JobParametersBuilder()
+                        .addString("basDd", basDd)
+                        .toJobParameters();
+                log.info("Job Parameters: {}", jobParameters);
+
+            }
+
+            jobLauncher.run(jobRegistry.getJob("investorTradeInfoJob"),jobParameters);
+        }
+        catch (NoSuchJobException | JobInstanceAlreadyCompleteException | JobExecutionAlreadyRunningException |
+               JobRestartException | JobParametersInvalidException e) {
+            log.error("배치처리오류 {}",e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
+
+
 }

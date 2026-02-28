@@ -4,13 +4,18 @@ import org.springframework.batch.item.ItemReader;
 import org.springframework.util.MultiValueMap;
 
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class OpenAPIListReader<T> extends OpenAPIBaseReader<T> implements ItemReader<List<T>> {
 
     private boolean isRead = false; // 한 번 읽었는지 체크하는 플래그
 
     public OpenAPIListReader(Class<T> clazz, MultiValueMap<String, String> params, String key, String path, app.monybatch.mony.system.core.constant.DataType datatype) {
-        super(clazz, params, key, path, datatype);
+        super(clazz, params, key, path, datatype, null);
+    }
+
+    public OpenAPIListReader(Class<T> clazz, MultiValueMap<String, String> params, String key, String path, app.monybatch.mony.system.core.constant.DataType datatype, ConcurrentHashMap<String, String> headers) {
+        super(clazz, params, key, path, datatype, headers);
     }
 
     @Override

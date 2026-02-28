@@ -21,6 +21,9 @@ configurations {
 
 repositories {
     mavenCentral()
+    // Spring AI는 아직 정식 릴리즈 전이라 마일스톤 저장소가 필요함
+    maven { url 'https://repo.spring.io/milestone' }
+    maven { url 'https://repo.spring.io/snapshot' }
 }
 
 dependencies {
@@ -67,6 +70,9 @@ dependencies {
     //HTML 파싱
     implementation 'org.jsoup:jsoup:1.15.4'
 
+    // RSS 파싱
+    implementation 'com.rometools:rome:1.18.0'
+
     implementation 'io.minio:minio:8.5.7'
 
     // PDF 텍스트 추출용
@@ -75,6 +81,7 @@ dependencies {
 
     // 3. PDF Parsing
     implementation 'org.apache.pdfbox:pdfbox:2.0.29'
+
 }
 
 dependencyManagement {

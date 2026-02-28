@@ -91,10 +91,11 @@ public class DartMappingJob {
                         if(item.getStock_code().equals(stock.getISU_SRT_CD()))
                         {
                             stock.setCORP_CODE(item.getCorp_code());
-                            log.info("DART-KRX 매핑완료 : {}",stock);
+                            //log.info("DART-KRX 매핑완료 : {}",stock);
                             return stock;
                         }
                     }
+                log.info("DART-KRX 매핑처리 {}건 완료",stocks.size());
                 return null;
             }
         };
