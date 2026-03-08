@@ -7,6 +7,8 @@ public class News {
     private String title;
     private String originallink;
     private String link;
+    private String company;
+    private String category;
     private String description;
     private String pubDate;
 }

@@ -1,6 +1,7 @@
 package app.monybatch.mony.business.batch.reader;
 
 import app.monybatch.mony.business.entity.news.News;
+import app.monybatch.mony.business.entity.news.NewsRss;
 import com.rometools.rome.feed.synd.SyndEntry;
 import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.io.SyndFeedInput;
@@ -23,20 +24,20 @@ import java.util.regex.Pattern;
 @Slf4j
 public class RssItemReader implements ItemReader<News> {
 
-    private final String rssUrl;
+    private final NewsRss rss;
     private Iterator<SyndEntry> itemIterator;
     private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_INSTANT;
 
 
-    public RssItemReader(String rssUrl) {
-        this.rssUrl = rssUrl;
+    public RssItemReader(NewsRss rss) {
+        this.rss = rss;
     }
 
     @Override
     public News read() throws Exception {
         if (itemIterator == null) {
             // URL 연결 및 스트림 열기
-            URLConnection connection = new URL(rssUrl).openConnection();
+            URLConnection connection = new URL(rss.getLink()).openConnection();
             connection.addRequestProperty("User-Agent", "Mozilla/5.0"); // 일부 RSS는 User-Agent 필요
             try (InputStream inputStream = connection.getInputStream()) {
                 // 스트림을 문자열로 읽기
@@ -51,9 +52,9 @@ public class RssItemReader implements ItemReader<News> {
 
                 List<SyndEntry> entries = feed.getEntries();
                 this.itemIterator = entries.iterator();
-                log.info("Reading RSS feed from: {}, Found {} articles.", rssUrl, entries.size());
+                log.info("Reading RSS feed from: {}, Found {} articles.", rss.getLink(), entries.size());
             } catch (Exception e) {
-                log.error("Failed to read or parse RSS feed: {}", rssUrl, e);
+                log.error("Failed to read or parse RSS feed: {}",  rss.getLink(), e);
                 // 오류 발생 시 빈 리스트로 초기화하여 다음 Reader로 넘어가도록 함
                 this.itemIterator = Collections.emptyIterator();
             }
@@ -61,22 +62,23 @@ public class RssItemReader implements ItemReader<News> {
 
         if (itemIterator.hasNext()) {
             SyndEntry entry = itemIterator.next();
-            return parseEntry(entry);
+            return parseEntry(entry,rss.getCompany(),rss.getCategory());
         } else {
             return null; // End of feed
         }
     }
 
-    private News parseEntry(SyndEntry entry) {
+    private News parseEntry(SyndEntry entry,String company, String category) {
         News news = new News();
-
+        String rssUrl = rss.getLink();
         // 제목 정제
         if (entry.getTitle() != null) {
             news.setTitle(cleanText(entry.getTitle()));
         }
 
         news.setOriginallink(entry.getLink());
-
+        news.setCategory(category);
+        news.setCompany(company);
         // 설명(Description) 정제
         if (entry.getDescription() != null) {
             news.setDescription(cleanText(entry.getDescription().getValue()));

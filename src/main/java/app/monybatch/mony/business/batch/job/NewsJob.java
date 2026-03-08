@@ -2,16 +2,21 @@ package app.monybatch.mony.business.batch.job;
 
 import app.monybatch.mony.business.batch.reader.CompositeNewsReader;
 import app.monybatch.mony.business.batch.reader.RssItemReader;
-import app.monybatch.mony.business.batch.service.GeminiApiClient;
-import app.monybatch.mony.business.batch.writer.NewsElasticsearchItemWriter;
+import app.monybatch.mony.business.batch.service.OllamaModelClient;
+import app.monybatch.mony.business.batch.writer.NewsItemWriter;
 import app.monybatch.mony.business.entity.news.News;
 import app.monybatch.mony.business.entity.news.NewsArticle;
+import app.monybatch.mony.business.entity.news.NewsRss;
 import app.monybatch.mony.business.repository.es.NewsArticleRepository;
+import app.monybatch.mony.business.repository.jpa.NewsRSSRepository;
 import app.monybatch.mony.system.utils.DateUtil;
 import app.monybatch.mony.system.utils.HashUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.batch.core.*;
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobParameters;
+import org.springframework.batch.core.JobParametersBuilder;
+import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.DuplicateJobException;
 import org.springframework.batch.core.configuration.JobRegistry;
 import org.springframework.batch.core.configuration.annotation.StepScope;
@@ -41,9 +46,10 @@ public class NewsJob {
     private final JobRepository jobRepository;
     private final JobRegistry jobRegistry;
     private final JobLauncher jobLauncher; // JobLauncher 주입
-    private final NewsArticleRepository newsArticleRepository;
+    private final NewsArticleRepository newsRepository;
+    private final NewsRSSRepository newsRssRepository;
     private final PlatformTransactionManager batchTransactionManager;
-    private final GeminiApiClient geminiApiClient;
+    private final OllamaModelClient ollamaModelClient;
 
     // --- 스케줄러 (5분마다 실행) ---
     @Scheduled(cron = "0 */5 * * * *") // 5분마다 실행
@@ -95,34 +101,13 @@ public class NewsJob {
     public ItemReader<News> newsRssReader() {
         List<ItemReader<News>> readers = new ArrayList<>();
 
-        // 구글 뉴스
-        //readers.add(new RssItemReader("https://news.google.com/rss?hl=ko&gl=KR&ceid=KR:ko"));
+        List<NewsRss> url = newsRssRepository.findByUseYn("Y");
 
-        // JTBC
-        readers.add(new RssItemReader("https://news-ex.jtbc.co.kr/v1/get/rss/newsflesh"));
-        readers.add(new RssItemReader("https://news-ex.jtbc.co.kr/v1/get/rss/program/NG10000013"));
-        readers.add(new RssItemReader("https://news-ex.jtbc.co.kr/v1/get/rss/section/economy"));
-        readers.add(new RssItemReader("https://news-ex.jtbc.co.kr/v1/get/rss/section/international"));
-        readers.add(new RssItemReader("https://news-ex.jtbc.co.kr/v1/get/rss/section/society"));
+        for (NewsRss item : url) {
+            log.info("RSS: {}",item.getLink());
+            readers.add(new RssItemReader(item));
+        }
 
-        // 연합뉴스
-        readers.add(new RssItemReader("https://www.yna.co.kr/rss/economy.xml"));
-        readers.add(new RssItemReader("https://www.yna.co.kr/rss/society.xml"));
-        readers.add(new RssItemReader("https://www.yna.co.kr/rss/international.xml"));
-
-        // SBS 뉴스
-        readers.add(new RssItemReader("https://news.sbs.co.kr/news/headlineRssFeed.do?plink=RSSREADER"));
-        readers.add(new RssItemReader("https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=02&plink=RSSREADER"));
-
-        // 더벨
-        readers.add(new RssItemReader("https://www.thevaluenews.co.kr/rss_view.php?code=m6481nr"));
-        readers.add(new RssItemReader("https://www.thevaluenews.co.kr/rss_view.php?code=m76i0t2"));
-        readers.add(new RssItemReader("https://www.thevaluenews.co.kr/rss_view.php?code=m71n1f6"));
-
-        // 한국경제
-        readers.add(new RssItemReader("https://help.wowtv.co.kr/serviceinfo/newsstand/FeedRss/stock"));
-        readers.add(new RssItemReader("https://help.wowtv.co.kr/serviceinfo/newsstand/FeedRss/init"));
-        readers.add(new RssItemReader("https://help.wowtv.co.kr/serviceinfo/newsstand/FeedRss/politics"));
 
         return new CompositeNewsReader(readers);
     }
@@ -134,36 +119,26 @@ public class NewsJob {
         return new ItemProcessor<>() {
             @Override
             public NewsArticle process(News item) throws Exception {
-                log.info("Processing news: {}", item.getTitle());
+                //log.info("Processing news: {}", item.getTitle());
 
                 // TODO: DB 조회 로직 추가 (이미 수집된 뉴스인지 확인)
                 // if (newsArticleRepository.existsByOriginallink(item.getOriginallink())) {
                 //     return null; // 이미 존재하면 건너뜀
                 // }
 
-                // AI 요약 요청 (단건 처리로 변경됨에 따라 로직 수정 필요할 수 있음)
-                // 현재 구조상 Chunk 단위로 묶어서 AI에 보내는 것이 효율적일 수 있으나,
-                // 여기서는 개별 처리를 가정하고 TODO로 남김.
-                // 실제로는 Processor에서 모아서 처리하거나, Writer에서 처리하는 방식을 고려해야 함.
-                
                 // 임시로 데이터 매핑만 수행
-                NewsArticle newsArticle = new NewsArticle();
-                newsArticle.setId(HashUtil.generateMD5Hash(item.getOriginallink()));
-                newsArticle.setTitle(item.getTitle());
-                newsArticle.setPublishedDate(item.getPubDate());
-                newsArticle.setContent(item.getDescription()); // 요약 전 원문(또는 description)
-                if(item.getDescription().contains("속보"))
-                {
-                    newsArticle.setCategory("속보");
-                }
-                else {
-                    newsArticle.setCategory("일반");
-                }
-                // TODO: Gemini API 호출하여 요약, 감정분석, 키워드 추출 수행
-                // String result = geminiApiClient.requestSummaryAndSentiment(List.of(item));
-                // ... 파싱 및 매핑 로직 ...
+                NewsArticle news = new NewsArticle();
+                news.setId(HashUtil.generateMD5Hash(item.getOriginallink()));
+                news.setTitle(item.getTitle());
+                news.setPublishedDate(item.getPubDate());
+                news.setContent(item.getDescription()); // 요약 전 원문(또는 description)
+                news.setCategory(item.getCategory());
+                news.setCompany(item.getCompany());
+                news.setLink(item.getOriginallink());
 
-                return newsArticle;
+
+
+                return news;
             }
         };
     }
@@ -171,7 +146,7 @@ public class NewsJob {
     // --- ItemWriter (Elasticsearch 저장) ---
     @Bean
     @StepScope
-    public NewsElasticsearchItemWriter newsArticleWriter() {
-        return new NewsElasticsearchItemWriter(newsArticleRepository);
+    public NewsItemWriter newsArticleWriter() {
+        return new NewsItemWriter(newsRepository,ollamaModelClient);
     }
 }

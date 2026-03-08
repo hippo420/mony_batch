@@ -130,6 +130,51 @@ public class OllimaApiClient {
         }
     }
 
+    public String extractKeyWord(List<News> news, int cnt) {
+
+        // ★ 프롬프트 생성
+        String prompt = String.format("""
+                너는 금융서비스를 제공하는 AI에이전트야.
+                아래 뉴스 기사에서 투자자게 필요한 중요한 키워드를 추출해줘.
+                사용자는 한국사람이야 반드시 한국어로 대답해.
+                1) 여러 개의 뉴스를 파이프(|)로 구분해서 입력함.
+                2) 중요한 %s개의 키워드를 추출할 것.
+                2.1) 각 뉴스기사의 키워드는 파이프(|)로 구분해 출력할 것.
+                2.2) 각 키워드는 콤마(,)로 구분할 것.
+                """,cnt);
+
+        StringBuilder sb = new StringBuilder();
+        for (News item: news)
+        {
+            sb.append(item.getDescription());
+            sb.append("|");
+        }
+        sb.deleteCharAt(sb.length()-1);
+
+
+        log.info("prompt = {}", sb.toString());
+        try {
+            // ★ Gemini API 호출 (1.28.0)
+            GenerateContentResponse response =
+                    client.models.generateContent(
+                            "gemini-2.5-flash",
+                            sb.toString(),
+                            null
+                    );
+
+            // ★ 응답 텍스트
+            String result = response.text()!= null ? response.text().trim() : "";
+
+            log.info("Gemini 응답: {}", result);
+
+            return result;
+
+        } catch (Exception e) {
+            log.error("Gemini API 호출 오류: {}", e.getMessage(), e);
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
 
     public String requestReportSummary(List<ReportDto> reportList) {
 

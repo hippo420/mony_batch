@@ -1,4 +1,4 @@
-package app.monybatch.mony.business.entity.sample;
+package app.monybatch.mony.business.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
@@ -38,6 +38,11 @@ public class StockTrade {
     @Column(name = "isu_cd", length = 20)
     @JsonProperty("ISU_CD")
     private String isuCd;
+
+    //종목코드
+    @Column(name = "isu_srt_cd", length = 6)
+    @JsonProperty("ISU_SRT_CD")
+    private String isuSrtCd;
 
     //종목명
     @Column(name = "isu_nm")

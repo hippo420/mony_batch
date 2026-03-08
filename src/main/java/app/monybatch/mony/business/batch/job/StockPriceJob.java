@@ -1,7 +1,7 @@
 package app.monybatch.mony.business.batch.job;
 
 import app.monybatch.mony.business.batch.reader.OpenAPIItemReader;
-import app.monybatch.mony.business.entity.sample.StockTrade;
+import app.monybatch.mony.business.entity.StockTrade;
 import app.monybatch.mony.business.repository.jpa.StockRepository;
 import app.monybatch.mony.system.core.constant.DataType;
 import jakarta.persistence.EntityManagerFactory;

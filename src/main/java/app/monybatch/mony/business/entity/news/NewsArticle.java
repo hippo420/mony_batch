@@ -39,6 +39,11 @@ public class NewsArticle {
     @Field(type = FieldType.Text)
     private String category;
 
+    @Field(type = FieldType.Text)
+    private String company;
+
+    @Field(type = FieldType.Text)
+    private String link;
 
     @Override
     public String toString() {
