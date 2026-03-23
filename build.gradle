@@ -82,6 +82,11 @@ dependencies {
     // 3. PDF Parsing
     implementation 'org.apache.pdfbox:pdfbox:2.0.29'
 
+    //임베딩
+    implementation 'org.springframework.ai:spring-ai-pgvector-store-spring-boot-starter'
+    implementation 'org.springframework.ai:spring-ai-openai-spring-boot-starter' // 임베딩 모델용
+
+
 }
 
 dependencyManagement {
