@@ -1,5 +1,7 @@
 package app.monybatch.mony.batch.news.reader;
 
+import app.monybatch.mony.batch.news.parser.NewsParser;
+import app.monybatch.mony.batch.news.parser.NewsParserFactory;
 import app.monybatch.mony.domian.news.entity.NewsDto;
 import app.monybatch.mony.domian.news.entity.NewsRss;
 import com.rometools.rome.feed.synd.SyndEntry;
@@ -13,13 +15,10 @@ import java.io.StringReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Slf4j
 public class RssItemReader implements ItemReader<NewsDto> {
@@ -27,10 +26,12 @@ public class RssItemReader implements ItemReader<NewsDto> {
     private final NewsRss rss;
     private Iterator<SyndEntry> itemIterator;
     private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_INSTANT;
+    private final NewsParserFactory parserFactory;
 
-
-    public RssItemReader(NewsRss rss) {
+    public RssItemReader(NewsRss rss, NewsParserFactory parserFactory) {
         this.rss = rss;
+        this.parserFactory=parserFactory;
+
     }
 
     @Override
@@ -52,7 +53,7 @@ public class RssItemReader implements ItemReader<NewsDto> {
 
                 List<SyndEntry> entries = feed.getEntries();
                 this.itemIterator = entries.iterator();
-                log.info("Reading RSS feed from: {}, Found {} articles.", rss.getLink(), entries.size());
+                log.info("Reading RSS feed from: {}, Found {} articles.", rss.getCompany(), entries.size());
             } catch (Exception e) {
                 log.error("Failed to read or parse RSS feed: {}",  rss.getLink(), e);
                 // 오류 발생 시 빈 리스트로 초기화하여 다음 Reader로 넘어가도록 함
@@ -70,103 +71,19 @@ public class RssItemReader implements ItemReader<NewsDto> {
 
     private NewsDto parseEntry(SyndEntry entry,String company, String category) {
         NewsDto news = new NewsDto();
-        String rssUrl = rss.getLink();
-        // 제목 정제
-        if (entry.getTitle() != null) {
-            news.setTitle(cleanText(entry.getTitle()));
-        }
-
-        news.setOriginallink(entry.getLink());
-        news.setCategory(category);
         news.setCompany(company);
-        // 설명(Description) 정제
-        if (entry.getDescription() != null) {
-            news.setDescription(cleanText(entry.getDescription().getValue()));
-        } else {
-            news.setDescription("");
-        }
+        news.setCategory(category);
+        String rssUrl = rss.getLink();
 
 
-        if (entry.getPublishedDate() != null) {
-            String isoDate = entry.getPublishedDate().toInstant()
-                    .atZone(ZoneId.systemDefault()) // 시스템 기본 시간대로 변환
-                    .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-            news.setPubDate(isoDate);
-        }
+        // 2. 언론사별 특화 파싱 (다형성 활용)
+        NewsParser parser = parserFactory.getParser(rssUrl);
+        parser.parseSpecific(entry, news);
 
 
-        // 언론사별 특화 파싱
-        if (rssUrl.contains("news.google.com")) {
-            // Google News는 description에 HTML 목록이 포함됨
-            // 여기서는 단순 텍스트로 저장하지만, 필요시 추가 파싱 가능
-        } else if (rssUrl.contains("jtbc.co.kr")) {
-            // JTBC는 CDATA로 감싸져 있지만 Rome이 자동으로 처리
-        } else if (rssUrl.contains("yna.co.kr")) {
-            // 연합뉴스는 dc:creator (작성자) 정보가 있음
-            // news.setAuthor(entry.getAuthor()); // Rome이 author를 파싱
-        } else if (rssUrl.contains("sbs.co.kr")) {
-            // SBS는 author 태그에 이메일과 이름이 같이 있음
-            // news.setAuthor(entry.getAuthor());
-        } else if (rssUrl.contains("thevaluenews.co.kr")) {
-            // 더벨
-        } else if (rssUrl.contains("wowtv.co.kr")) {
-            // 한국경제
-        }
+
         return news;
     }
 
-    private String cleanText(String text) {
-        if (text == null) return "";
 
-        // 1. HTML 태그 제거
-        String cleaned = text.replaceAll("<[^>]*>", "");
-
-        // 2. HTML 엔티티 디코딩 (기본)
-        cleaned = cleaned.replace("&lt;", "<")
-                .replace("&gt;", ">")
-                .replace("&amp;", "&")
-                .replace("&quot;", "\"")
-                .replace("&apos;", "'")
-                .replace("&nbsp;", " ");
-
-        // 3. 숫자형 HTML 엔티티 디코딩 (&#39; 등)
-        Pattern pattern = Pattern.compile("&#(\\d+);");
-        Matcher matcher = pattern.matcher(cleaned);
-        StringBuilder sb = new StringBuilder();
-        while (matcher.find()) {
-            try {
-                int codePoint = Integer.parseInt(matcher.group(1));
-                matcher.appendReplacement(sb, new String(Character.toChars(codePoint)));
-            } catch (IllegalArgumentException e) {
-                // 유효하지 않은 코드 포인트는 그대로 둠
-                matcher.appendReplacement(sb, matcher.group(0));
-            }
-        }
-        matcher.appendTail(sb);
-        cleaned = sb.toString();
-
-        // 4. 16진수 HTML 엔티티 디코딩 (&#x27; 등)
-        pattern = Pattern.compile("&#x([0-9a-fA-F]+);");
-        matcher = pattern.matcher(cleaned);
-        sb = new StringBuilder();
-        while (matcher.find()) {
-            try {
-                int codePoint = Integer.parseInt(matcher.group(1), 16);
-                matcher.appendReplacement(sb, new String(Character.toChars(codePoint)));
-            } catch (IllegalArgumentException e) {
-                matcher.appendReplacement(sb, matcher.group(0));
-            }
-        }
-        matcher.appendTail(sb);
-        cleaned = sb.toString();
-
-        // 5. 특수 따옴표 및 문자 정규화
-        cleaned = cleaned.replace('’', '\'') // right single quote
-                         .replace('‘', '\'') // left single quote
-                         .replace('“', '"')  // left double quote
-                         .replace('”', '"'); // right double quote
-
-        // 6. 앞뒤 공백 및 연속 공백 제거
-        return cleaned.trim().replaceAll("\\s+", " ");
-    }
 }

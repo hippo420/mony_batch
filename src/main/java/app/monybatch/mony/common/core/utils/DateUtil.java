@@ -2,6 +2,7 @@ package app.monybatch.mony.common.core.utils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -118,5 +119,32 @@ public class DateUtil {
             // 날짜 형식이 잘못되었을 경우 예외 처리
             throw new IllegalArgumentException("날짜 형식이 올바르지 않습니다 (yyyyMMdd 필요): " + curYmd);
         }
-    };
+    }
+
+    public static LocalDateTime parseToLocalDateTime(String value) {
+        if (value == null || value.isBlank()) {
+            return LocalDateTime.now();
+        }
+
+        try {
+            return LocalDateTime.parse(value, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        } catch (Exception ignored) {
+        }
+
+        try {
+            return OffsetDateTime.parse(value, DateTimeFormatter.ISO_OFFSET_DATE_TIME).toLocalDateTime();
+        } catch (Exception ignored) {
+        }
+
+        try {
+            return LocalDateTime.parse(value, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        } catch (Exception ignored) {
+        }
+
+        return LocalDateTime.now();
+    }
+
+    public static String toStringDateTime(LocalDateTime dateTime) {
+        return dateTime == null ? null : dateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+    }
 }

@@ -1,20 +1,22 @@
 package app.monybatch.mony.batch.news.job;
 
+import app.monybatch.mony.batch.news.parser.NewsParserFactory;
 import app.monybatch.mony.batch.news.processor.NewsRuleFilterProcessor;
-import app.monybatch.mony.batch.support.parameter.DescriptiveJob;
 import app.monybatch.mony.batch.news.reader.CompositeNewsReader;
 import app.monybatch.mony.batch.news.reader.RssItemReader;
-import app.monybatch.mony.infra.llm.OllamaModelClient;
 import app.monybatch.mony.batch.news.writer.NewsItemWriter;
-import app.monybatch.mony.domian.news.entity.NewsDto;
-import app.monybatch.mony.infra.elasticsearch.news.NewsArticle;
-import app.monybatch.mony.domian.news.entity.NewsRss;
-import app.monybatch.mony.infra.elasticsearch.news.NewsArticleRepository;
-import app.monybatch.mony.domian.news.repository.NewsRSSRepository;
+import app.monybatch.mony.batch.support.parameter.DescriptiveJob;
 import app.monybatch.mony.common.core.utils.DateUtil;
 import app.monybatch.mony.common.core.utils.HashUtil;
+import app.monybatch.mony.domian.news.entity.NewsDto;
+import app.monybatch.mony.domian.news.entity.NewsRss;
+import app.monybatch.mony.domian.news.repository.NewsRSSRepository;
+import app.monybatch.mony.infra.elasticsearch.news.NewsArticle;
+import app.monybatch.mony.infra.elasticsearch.news.NewsArticleRepository;
+import app.monybatch.mony.infra.llm.OllamaModelClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
@@ -34,7 +36,6 @@ import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.support.CompositeItemProcessor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import java.util.ArrayList;
@@ -53,9 +54,11 @@ public class NewsJob {
     private final NewsRSSRepository newsRssRepository;
     private final PlatformTransactionManager batchTransactionManager;
     private final OllamaModelClient ollamaModelClient;
+    private final VectorStore vectorStore; // VectorStore 주입 추가
+    private final NewsParserFactory parserFactory; // VectorStore 주입 추가
 
     // --- 스케줄러 (5분마다 실행) ---
-    @Scheduled(cron = "0 */5 * * * *") // 5분마다 실행
+    //@Scheduled(cron = "0 */10 * * * *") // 5분마다 실행
     public void runNewsCollectionJob() {
         try {
             JobParameters jobParameters = new JobParametersBuilder()
@@ -108,7 +111,7 @@ public class NewsJob {
 
         for (NewsRss item : url) {
             //log.info("RSS: {}",item.getLink());
-            readers.add(new RssItemReader(item));
+            readers.add(new RssItemReader(item,parserFactory));
         }
 
 
@@ -168,6 +171,6 @@ public class NewsJob {
     @Bean
     @StepScope
     public NewsItemWriter newsArticleWriter() {
-        return new NewsItemWriter(newsRepository,ollamaModelClient);
+        return new NewsItemWriter(); // vectorStore 주입
     }
 }

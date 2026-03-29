@@ -6,6 +6,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class NewsAnalysis {
+    private String type;
     private String keyword;
     private String sentiment;
     private String reason;

@@ -16,13 +16,13 @@ import java.util.Objects;
 public class OllamaModelClient  {
     private final WebClient webClient;
     private final String model;
-    private String PROMT_COND="중요: 반드시 한국어로 답변하세요. 중국어는 사용하지 마세요.\n\n";
+    private String PROMT_COND="중요: 반드시 한국어로 답변하세요. 중국어는 사용하지 마세요. Answer in Korean only!!!\n\n";
 
     public OllamaModelClient(WebClient.Builder builder,
                              @Value("${apikey.ollama.base-url}") String url,
                              @Value("${apikey.ollama.chat.options.model}") String model) {
 
-        log.info("INIT url: {}",url);
+
         this.model=model;
         this.webClient = builder
                 .baseUrl(url)
@@ -99,6 +99,7 @@ public class OllamaModelClient  {
                                     2. 하나만 선택
                                     3. "경제", "시장" 같은 추상어 금지
                                     4. 가능하면 세부 영역 포함 (예: "반도체-메모리")
+                                    5. MACRO, SECTOR, THEME, COMPANY를 직접 사용하는 것은 금지
                             
                             판단 기준:
                                     [1] 거시경제
@@ -132,6 +133,13 @@ public class OllamaModelClient  {
                             출력 형식(JSON):
                             [
                               {
+                                "type":"MACRO or SECTOR or THEME or COMPANY",
+                                "keyword": "",
+                                "sentiment": "POSITIVE or NEGATIVE or NEUTRAL",
+                                "reason": ""
+                              },
+                              {
+                                "type":"MACRO or SECTOR or THEME or COMPANY",
                                 "keyword": "",
                                 "sentiment": "POSITIVE or NEGATIVE or NEUTRAL",
                                 "reason": ""
@@ -143,6 +151,7 @@ public class OllamaModelClient  {
                             2. 입력 순서 유지
                             3. 키워드는 반드시 명사형 (예: "반도체", "금리", "AI")
                             4. 추측 금지 (근거 없는 의견 금지)
+                            5. 영어로 기사가 제공되는 경우, 한국어로 번역해 답변할 것
                             
                             기사내용
                             %s
@@ -206,7 +215,7 @@ public class OllamaModelClient  {
             double duration = (end - start) / 1000.0;
 
             // 방법 1: SLF4J의 기본 중괄호 방식 (가장 추천)
-            log.info("\n[{}] 완료 - 소요시간: {}초\n------------------------------", taskName, duration);
+            //log.info("\n[{}] 완료 - 소요시간: {}초\n------------------------------", taskName, duration);
 
             // 방법 2: 굳이 소수점 2자리까지 표현하고 싶다면 String.format을 별도로 사용
             // String message = String.format("\n[%s] 완료 - 소요시간: %.2f초", taskName, duration);
