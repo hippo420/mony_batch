@@ -7,7 +7,7 @@ import lombok.*;
 @Table(name = "article_parse_rule")
 @Getter
 @Setter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class ArticleParseRule {

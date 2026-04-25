@@ -21,6 +21,7 @@ public class StockItemJobConfig {
     private final Step prebatchStep;
     private final Step batchStep;
     private final Step afterBatchStep;
+    private final Step dartMappingStep;
 
     @Bean
     public Job stockItemJob() {
@@ -35,6 +36,7 @@ public class StockItemJobConfig {
                 .start(prebatchStep)
                 .next(batchStep)
                 .next(afterBatchStep)
+                .next(dartMappingStep)
                 .build();
     }
 }

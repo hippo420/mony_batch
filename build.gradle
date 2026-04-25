@@ -17,6 +17,12 @@ configurations {
     compileOnly {
         extendsFrom annotationProcessor
     }
+    all {
+        resolutionStrategy {
+            force 'net.bytebuddy:byte-buddy:1.14.17'
+            force 'net.bytebuddy:byte-buddy-agent:1.14.17'
+        }
+    }
 }
 
 repositories {

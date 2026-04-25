@@ -1,9 +1,10 @@
 package app.monybatch.mony.domian.stock.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.*;
-
-import java.util.List;
 
 @Entity
 @Table(name = "industry_code")
@@ -15,29 +16,33 @@ import java.util.List;
 public class IndustryCode {
 
     @Id
-    @Column(name = "code", length = 30, nullable = false)
+    @Column(name = "code", length = 5, nullable = false)
     private String code;
 
-    @Column(name = "code_name", length = 100, nullable = false)
-    private String codeName;
+    @Column(name = "codename", length = 250)
+    private String codename;
 
-    @Column(name = "detail", length = 500)
-    private String detail;
+    @Column(name = "mainCatCode", length = 1)
+    private String mainCatCode;
 
-    @Column(name = "etc1", length = 100)
-    private String etc1;
+    @Column(name = "mainCatName", length = 100)
+    private String mainCatName;
 
-    @Column(name = "etc2", length = 100)
-    private String etc2;
+    @Column(name = "midCatCode", length = 2)
+    private String midCatCode;
 
-    @Column(name = "etc3", length = 100)
-    private String etc3;
+    @Column(name = "midCatName", length = 100)
+    private String midCatName;
 
-    @Column(name = "etc4", length = 100)
-    private String etc4;
+    @Column(name = "subCatCode", length = 3)
+    private String subCatCode;
 
-    @OneToMany(mappedBy = "industryCode")
-    private List<Stock> stocks;
+    @Column(name = "subCatName", length = 100)
+    private String subCatName;
 
+    @Column(name = "detailCatCode", length = 4)
+    private String detailCatCode;
 
+    @Column(name = "detailCatName", length = 100)
+    private String detailCatName;
 }

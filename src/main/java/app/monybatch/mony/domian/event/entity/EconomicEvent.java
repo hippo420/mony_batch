@@ -8,17 +8,17 @@ import lombok.*;
 @Entity
 @Table(name = "economic_events")
 @Getter
-@Setter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor // 접근 제한자 제거 (기본 public)
 @AllArgsConstructor
 @Builder
 public class EconomicEvent {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
     @Column(nullable = false)
-    private String eventDate; // date는 DB 예약어인 경우가 많아 변경 권장
+    private String eventDate;
 
     private String eventTime;
 
@@ -41,12 +41,11 @@ public class EconomicEvent {
     @Enumerated(EnumType.STRING)
     private MarketImpact impact;
 
-    // 비즈니스 로직에 필요한 업데이트 메서드 (필요 시)
     public void updateActual(String actual) {
         this.actual = actual;
     }
-    public void updateMetadata(String category) {
-
+    public void updateMetadata(String category, String impact) {
         this.category = EventCategory.findByKeyword(category);
+        this.impact = MarketImpact.findInText(impact);
     }
 }

@@ -40,9 +40,9 @@ public class BatchDBConfig {
         em.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
 
         HashMap<String, Object> properties = new HashMap<>();
-        properties.put("hibernate.hbm2ddl.auto", "update");       // 운영에서는 validate 권장
+        properties.put("hibernate.hbm2ddl.auto", "update");
         properties.put("hibernate.show_sql", "false");
-        properties.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect"); // MySQL -> PostgreSQL
+        properties.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
 
         em.setJpaPropertyMap(properties);
         return em;

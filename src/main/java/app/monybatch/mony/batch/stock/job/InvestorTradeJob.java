@@ -50,6 +50,7 @@ public class InvestorTradeJob {
 
     private final StockRepository stockRepository;
     private final String PATH = "/uapi/domestic-stock/v1/quotations/investor-trade-by-stock-daily";
+    private final String Path1 = "https://kind.krx.co.kr/corpgeneral/corpList.do";
 
     //@Qualifier("batchEntityManager")
     private final EntityManagerFactory entityManagerFactory;

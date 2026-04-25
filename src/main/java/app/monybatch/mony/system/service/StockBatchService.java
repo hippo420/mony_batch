@@ -39,7 +39,7 @@ public class StockBatchService {
 
             }
 
-            jobLauncher.run(jobRegistry.getJob("itemJob"),jobParameters);
+            jobLauncher.run(jobRegistry.getJob("stockItemJob"),jobParameters);
         }
         catch (NoSuchJobException | JobInstanceAlreadyCompleteException | JobExecutionAlreadyRunningException |
             JobRestartException | JobParametersInvalidException e) {
@@ -72,7 +72,7 @@ public class StockBatchService {
 
             }
 
-            jobLauncher.run(jobRegistry.getJob("priceJob"),jobParameters);
+            jobLauncher.run(jobRegistry.getJob("stockPriceJob"),jobParameters);
         }
         catch (NoSuchJobException | JobInstanceAlreadyCompleteException | JobExecutionAlreadyRunningException |
                JobRestartException | JobParametersInvalidException e) {

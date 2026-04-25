@@ -70,13 +70,13 @@ public class OpenAPIUtil {
                 .reduce(String::concat)
                 .block();
 
-        log.info("API Response: {}",result);
+        //log.info("API Response: {}",result);
 
         if (result == null || result.isEmpty()) {
             log.error("Empty response from API");
             throw new RuntimeException("Empty response from API");
         }
-        log.info(result);
+        //log.info(result);
         JSONObject jsonObject = null;
 
         try {
@@ -170,7 +170,7 @@ public class OpenAPIUtil {
                         })
                         .retrieve()
                         .bodyToFlux(DataBuffer.class)
-                        // 🔥 핵심 1: downstream cancel / error 시 DataBuffer 해제
+                        //downstream cancel / error 시 DataBuffer 해제
                         .doOnDiscard(DataBuffer.class, DataBufferUtils::release);
 
         try (AsynchronousFileChannel channel =

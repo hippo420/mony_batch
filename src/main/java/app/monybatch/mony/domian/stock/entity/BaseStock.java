@@ -112,6 +112,9 @@ public class BaseStock extends CommonEntitiy {
     @JoinColumn(name = "industry_code")
     private IndustryCode industryCode;
 
+    @Column(name ="INDUST_CODE")
+    private String industCode;
+
     /* 테마 코드 */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "themeCode")

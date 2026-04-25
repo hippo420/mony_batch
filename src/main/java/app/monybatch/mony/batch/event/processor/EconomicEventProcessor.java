@@ -2,6 +2,7 @@ package app.monybatch.mony.batch.event.processor;
 
 import app.monybatch.mony.batch.event.parser.EconomicCategoryClassifier;
 import app.monybatch.mony.batch.event.parser.EconomicImportanceClassifier;
+import app.monybatch.mony.batch.event.parser.NationClassifier;
 import app.monybatch.mony.common.core.utils.HashUtil;
 import app.monybatch.mony.domian.event.dto.EconomicEventDto;
 import app.monybatch.mony.domian.event.dto.EventCategory;
@@ -23,7 +24,7 @@ public class EconomicEventProcessor implements ItemProcessor<EconomicEventDto, E
                 .id(HashUtil.generateMD5Hash(item.getDate()+item.getTime()+item.getEvent()))
                 .eventDate(convertDate(item.getDate()))
                 .eventTime(convertTimeTo24H(item.getTime()))
-                .country(item.getCountry())
+                .country(NationClassifier.convertToCode(item.getCountry()))
                 .event(item.getEvent())
                 .actual(item.getActual())
                 .previous(item.getPrevious())

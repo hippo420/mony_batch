@@ -17,6 +17,8 @@ import static app.monybatch.mony.common.constant.ColumnConst.BASDD;
 public class StockReaderConfig {
 
     private final String PATH = "/svc/apis/sto/stk_isu_base_info";
+    private final String PRICE_PATH = "/svc/apis/sto/stk_isu_base_info";
+
 
     @Bean
     @StepScope
