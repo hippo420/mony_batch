@@ -39,6 +39,7 @@ public class NewsRuleFilterProcessor implements ItemProcessor<NewsDto, NewsDto> 
     @Override
     public NewsDto process(NewsDto item) throws Exception {
         String title = item.getTitle();
+        if(title==null) return null;
         String content = item.getDescription();
 
         String total = title.concat(content);

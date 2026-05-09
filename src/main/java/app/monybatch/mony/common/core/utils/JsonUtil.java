@@ -79,7 +79,7 @@ public class JsonUtil {
     }
 
     public static <T> List<T> convert(JSONObject data, String key, Class<T> clazz) {
-        //log.info("데이터: {}",data.toString());
+        log.info("데이터: {}",data.toString());
         try {
             JSONArray arr = data.getJSONArray(key);  // org.json.JSONArray
 

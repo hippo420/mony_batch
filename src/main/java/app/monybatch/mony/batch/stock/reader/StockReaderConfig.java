@@ -3,7 +3,6 @@ package app.monybatch.mony.batch.stock.reader;
 import app.monybatch.mony.batch.support.reader.OpenAPIItemReader;
 import app.monybatch.mony.common.constant.DataType;
 import app.monybatch.mony.domian.stock.entity.Stock;
-import app.monybatch.mony.domian.stock.entity.StockTemp;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -16,26 +15,9 @@ import static app.monybatch.mony.common.constant.ColumnConst.BASDD;
 @Configuration
 public class StockReaderConfig {
 
-    private final String PATH = "/svc/apis/sto/stk_isu_base_info";
-    private final String PRICE_PATH = "/svc/apis/sto/stk_isu_base_info";
-
-
-    @Bean
-    @StepScope
-    public OpenAPIItemReader<StockTemp> stockTempApiReader(
-            @Value("#{jobParameters['basDd']}") String basDd) {
-
-        MultiValueMap<String,String> params = new LinkedMultiValueMap<>();
-        params.add(BASDD, basDd);
-
-        return new OpenAPIItemReader<>(
-                StockTemp.class,
-                params,
-                "KRX",
-                PATH,
-                DataType.DATA_JSON
-        );
-    }
+    private final String PATH_KOSPI = "/svc/apis/sto/stk_isu_base_info";
+    private final String PATH_KOSDAQ = "/svc/apis/sto/ksq_isu_base_info";
+    private final String PATH_KONEX = "/svc/apis/sto/knx_isu_base_info";
 
     @Bean
     @StepScope
@@ -49,7 +31,41 @@ public class StockReaderConfig {
                 Stock.class,
                 params,
                 "KRX",
-                PATH,
+                PATH_KOSPI,
+                DataType.DATA_JSON
+        );
+    }
+
+    @Bean
+    @StepScope
+    public OpenAPIItemReader<Stock> stockApiKosdaqReader(
+            @Value("#{jobParameters['basDd']}") String basDd) {
+
+        MultiValueMap<String,String> params = new LinkedMultiValueMap<>();
+        params.add(BASDD, basDd);
+
+        return new OpenAPIItemReader<>(
+                Stock.class,
+                params,
+                "KRX",
+                PATH_KOSDAQ,
+                DataType.DATA_JSON
+        );
+    }
+
+    @Bean
+    @StepScope
+    public OpenAPIItemReader<Stock> stockApiKonexReader(
+            @Value("#{jobParameters['basDd']}") String basDd) {
+
+        MultiValueMap<String,String> params = new LinkedMultiValueMap<>();
+        params.add(BASDD, basDd);
+
+        return new OpenAPIItemReader<>(
+                Stock.class,
+                params,
+                "KRX",
+                PATH_KONEX,
                 DataType.DATA_JSON
         );
     }

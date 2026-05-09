@@ -65,6 +65,9 @@ dependencies {
     //Spring Data Elasticsearch 의존성
     implementation 'org.springframework.data:spring-data-elasticsearch'
 
+    // Logstash JSON 로그 인코더 (Filebeat 연동용)
+    implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
+
     implementation("com.google.genai:google-genai:1.28.0")
     implementation("com.google.cloud:google-cloud-vertexai:1.40.0")
 

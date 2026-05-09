@@ -30,7 +30,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import java.util.Collections;
+import java.util.List;
 
 @Slf4j
 @Configuration
@@ -47,7 +47,7 @@ public class DartInfoJob {
     @Bean
     public DescriptiveJob fetchDartInfoJob() throws DuplicateJobException {
         DefaultJobParametersValidator validator = new DefaultJobParametersValidator();
-        validator.setRequiredKeys(Collections.singletonList("basDd").toArray(new String[0]));
+        validator.setRequiredKeys(List.of("fromYmd", "toYmd").toArray(new String[0]));
         validator.setOptionalKeys(new String[] { "forced_id"});
 
         Job job = new JobBuilder("fetchDartInfoJob", jobRepository)
@@ -66,7 +66,7 @@ public class DartInfoJob {
 
         return new StepBuilder("readDartInfoStep",jobRepository)
                 .<DartBasicEntity, DartBasicEntity> chunk(100,batchTransactionManager)
-                .reader(dartInfoReader(null))
+                .reader(dartInfoReader(null,null))
                 .writer(dartInfoWriter())
                 .transactionManager(batchTransactionManager)
                 .build();
@@ -76,13 +76,22 @@ public class DartInfoJob {
     //데이터 읽기
     @Bean
     @StepScope
-    public OpenAPIItemReader<DartBasicEntity> dartInfoReader(@Value("#{jobParameters['basDd']}") String basDd) {
+    public OpenAPIItemReader<DartBasicEntity> dartInfoReader(@Value("#{jobParameters['fromYmd']}") String fromYmd, @Value("#{jobParameters['toYmd']}") String toYmd) {
+        if(fromYmd.isEmpty())
+        {
+            fromYmd = DateUtil.getDateYmd();
+        }
+        if(toYmd.isEmpty())
+        {
+            toYmd = DateUtil.getDateYmd();
+        }
 
-        String sYmd = basDd.isEmpty() ? DateUtil.getDateYmd() : basDd;
+        log.info("공시 내역 조회 From :{} To: {}",fromYmd,toYmd);
+
         MultiValueMap<String,String> params = new LinkedMultiValueMap<>();
         params.add("corp_cls", AppConst.CON_Y);
-        params.add("bgn_de",sYmd);
-        params.add("end_de",sYmd);
+        params.add("bgn_de",fromYmd);
+        params.add("end_de",toYmd);
         params.add("page_no", DartConst.PAGE_NO);
         params.add("page_count",DartConst.PAGE_COUNT);
         return new OpenAPIItemReader<>(DartBasicEntity.class, params,"DART",PATH, DataType.DATA_JSON,null);

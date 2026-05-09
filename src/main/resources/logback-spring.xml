@@ -1,53 +1,88 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <configuration>
-    <property name="LOG_PATH" value="/logs/mony_batch"/>
-    <property name="LOG_FILE_NAME" value="SYSTEM"/>
-    <property name="ERR_LOG_FILE_NAME" value="ERROR"/>
-    <property name="CONSOLE_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %magenta([%thread]) %highlight([%-3level]) %logger{5} - %msg %n" />
+    <!-- Spring 환경변수로 로그 경로 설정 (local: ./logs/mony_batch, dev/prod: /logs/mony_batch) -->
+    <springProperty scope="context" name="LOG_PATH" source="logging.file.path" defaultValue="./logs/mony_batch"/>
+    <springProperty scope="context" name="ACTIVE_PROFILE" source="spring.profiles.active" defaultValue="local"/>
 
-    <!-- Console appender 설정 -->
+    <property name="LOG_FILE_NAME" value="SYSTEM"/>
+    <property name="JSON_LOG_FILE_NAME" value="SYSTEM-json"/>
+
+    <!-- Console appender (사람이 읽기 편한 포맷) -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <Pattern>[%d{yyyy.MM.dd HH:mm:ss.SSS}] - [%-5level] - [%X{USER_ID}] - [%logger{5}] - %msg%n</Pattern>
+            <Pattern>[%d{yyyy.MM.dd HH:mm:ss.SSS}] [%-5level] [%X{JOB_NAME}/%X{STEP_NAME}] [%logger{5}] - %msg%n</Pattern>
         </encoder>
     </appender>
 
-
+    <!-- 일반 텍스트 파일 appender (사람이 읽기 편한 포맷) -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <!-- 파일경로 설정 -->
         <file>${LOG_PATH}/${LOG_FILE_NAME}.log</file>
-        <!-- 출력패턴 설정-->
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <Pattern>[%d{yyyy.MM.dd HH:mm:ss.SSS}][%-5level] [%X{USER_ID}] [%logger{5}] - %msg%n</Pattern>
+            <Pattern>[%d{yyyy.MM.dd HH:mm:ss.SSS}][%-5level] [%X{JOB_NAME}] [%X{STEP_NAME}] [%logger{5}] - %msg%n</Pattern>
         </encoder>
-        <!-- Rolling 정책 (파일 관리설정) -->
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <!-- .gz,.zip 등을 넣으면 자동 일자별 로그파일 압축 -->
             <fileNamePattern>${LOG_PATH}/${LOG_FILE_NAME}.%d{yyyy-MM-dd}_%i.log</fileNamePattern>
-            <!--    파일 크기 지정할떄 사용 -->
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-                <!-- 파일당 최고 용량 kb, mb, gb -->
                 <maxFileSize>10MB</maxFileSize>
             </timeBasedFileNamingAndTriggeringPolicy>
-            <!-- 일자별 로그파일 최대 보관주기(~일), 해당 설정일 이상된 파일은 자동으로 제거-->
             <maxHistory>30</maxHistory>
-            <!--<MinIndex>1</MinIndex> <MaxIndex>10</MaxIndex>-->
         </rollingPolicy>
     </appender>
 
+    <!-- JSON 파일 appender - Filebeat가 이 파일을 읽어 Elasticsearch로 전송 -->
+    <appender name="JSON_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/json/${JSON_LOG_FILE_NAME}.log</file>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <!-- 공통 필드 -->
+            <customFields>{"app":"mony-batch","env":"${ACTIVE_PROFILE}"}</customFields>
+            <!-- MDC 필드 (배치 컨텍스트) -->
+            <includeMdcKeyName>JOB_NAME</includeMdcKeyName>
+            <includeMdcKeyName>JOB_INSTANCE_ID</includeMdcKeyName>
+            <includeMdcKeyName>STEP_NAME</includeMdcKeyName>
+            <includeMdcKeyName>USER_ID</includeMdcKeyName>
+            <!-- 스택트레이스 포함 -->
+            <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                <maxDepthPerCause>10</maxDepthPerCause>
+                <shortenedClassNameLength>40</shortenedClassNameLength>
+                <rootCauseFirst>true</rootCauseFirst>
+            </throwableConverter>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/json/${JSON_LOG_FILE_NAME}.%d{yyyy-MM-dd}_%i.log</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>10MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+    </appender>
 
+    <!-- JSON appender 비동기 래핑 (I/O 블로킹 방지) -->
+    <appender name="ASYNC_JSON" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="JSON_FILE"/>
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <neverBlock>true</neverBlock>
+    </appender>
 
-    <!--Logger -->
-    <logger name ="jdbc" level="OFF"/>
-    <logger name ="jdbc.sqlonly" level="INFO"/>
-    <logger name ="jdbc.audit" level="OFF"/>
-    <logger name ="jdbc.sqltiming" level="OFF"/>
-    <logger name ="jdbc.resultset" level="OFF"/>
-    <logger name ="jdbc.resultsettable" level="OFF"/>
-    <logger name ="jdbc.connection" level="OFF"/>
+    <!-- Logger 레벨 설정 -->
+    <logger name="jdbc"                level="OFF"/>
+    <logger name="jdbc.sqlonly"        level="INFO"/>
+    <logger name="jdbc.audit"          level="OFF"/>
+    <logger name="jdbc.sqltiming"      level="OFF"/>
+    <logger name="jdbc.resultset"      level="OFF"/>
+    <logger name="jdbc.resultsettable" level="OFF"/>
+    <logger name="jdbc.connection"     level="OFF"/>
+
+    <!-- 애플리케이션 로거 -->
+    <logger name="app.monybatch" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+        <appender-ref ref="ASYNC_JSON"/>
+    </logger>
 
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
+        <appender-ref ref="ASYNC_JSON"/>
     </root>
 </configuration>

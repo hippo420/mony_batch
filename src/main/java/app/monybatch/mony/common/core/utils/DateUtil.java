@@ -3,14 +3,43 @@ package app.monybatch.mony.common.core.utils;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class DateUtil {
     public static final String YYYYMM = "yyyyMM";
     public static final String YYYYMMDD = "yyyyMMdd";
     public static final String YYYYMMDDHHMMSS = "yyyyMMddHHmmss";
+
+    /**
+     * Date 객체를 원하는 포맷의 문자열로 변환
+     * @param date 변환할 날짜
+     * @param format 포맷 (예: "yyyy-MM-dd HH:mm:ss")
+     */
+    public static String format(Date date, String format) {
+        if (date == null) return null;
+
+        // Date -> LocalDateTime 변환
+        LocalDateTime localDateTime = date.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime();
+
+        return localDateTime.format(DateTimeFormatter.ofPattern(format));
+    }
+
+    /**
+     * 문자열을 Date 객체로 변환 (공시 API 연동 시 유용)
+     */
+    public static Date parse(String dateStr, String format) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format);
+        LocalDateTime localDateTime = LocalDateTime.parse(dateStr, formatter);
+
+        return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+    }
 
     /*
      @Method :
@@ -146,5 +175,24 @@ public class DateUtil {
 
     public static String toStringDateTime(LocalDateTime dateTime) {
         return dateTime == null ? null : dateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+    }
+
+    /**
+     * 특정 시작일자부터 현재일자까지의 날짜 목록을 YYYYMMDD 포맷의 리스트로 반환합니다.
+     *
+     * @param startDateStr 시작 일자 (YYYYMMDD)
+     * @return 날짜 문자열 리스트
+     */
+    public static List<String> getDatesUntilToday(String startDateStr) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        LocalDate startDate = LocalDate.parse(startDateStr, formatter);
+        LocalDate today = LocalDate.now();
+
+        if (startDate.isAfter(today)) return new ArrayList<>();
+
+
+        return startDate.datesUntil(today.plusDays(1))
+                .map(date -> date.format(formatter))
+                .collect(Collectors.toList());
     }
 }

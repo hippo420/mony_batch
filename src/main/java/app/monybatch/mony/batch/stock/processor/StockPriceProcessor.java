@@ -24,10 +24,24 @@ public class StockPriceProcessor implements ItemProcessor<String, List<StockTrad
         params.add("basDd", basDd);
 
         OpenAPIItemReader<StockTrade> reader = new OpenAPIItemReader<>(
-                StockTrade.class, params, "KRX", StockConstant.KRX_STOCK_TRX_URL, DataType.DATA_JSON);
+                StockTrade.class, params, "KRX", StockConstant.KRX_KOSPI_TRX_URL, DataType.DATA_JSON);
+        OpenAPIItemReader<StockTrade> reader1 = new OpenAPIItemReader<>(
+                StockTrade.class, params, "KRX", StockConstant.KRX_KOSDAQ_TRX_URL, DataType.DATA_JSON);
+        OpenAPIItemReader<StockTrade> reader2 = new OpenAPIItemReader<>(
+                StockTrade.class, params, "KRX", StockConstant.KRX_KONEX_TRX_URL, DataType.DATA_JSON);
 
         StockTrade item;
         while ((item = reader.read()) != null) {
+            if (StringUtils.hasText(item.getIsuCd())) {
+                datas.add(item);
+            }
+        }
+        while ((item = reader1.read()) != null) {
+            if (StringUtils.hasText(item.getIsuCd())) {
+                datas.add(item);
+            }
+        }
+        while ((item = reader2.read()) != null) {
             if (StringUtils.hasText(item.getIsuCd())) {
                 datas.add(item);
             }

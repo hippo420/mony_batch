@@ -1,28 +1,26 @@
 package app.monybatch.mony.batch.support.listener;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.listener.ChunkListenerSupport;
 import org.springframework.batch.core.scope.context.ChunkContext;
 
+@Slf4j
 public class LoggingChunkListener extends ChunkListenerSupport {
-    private static final Logger logger = LoggerFactory.getLogger(LoggingChunkListener.class);
+
     private int chunkCount = 0;
 
     @Override
-    public void beforeChunk(ChunkContext context) {
-        // 청크가 시작될 때 호출됩니다.
-    }
-
-    @Override
     public void afterChunk(ChunkContext context) {
-        // 청크가 끝날 때마다 카운터를 증가시키고 로그를 남깁니다.
         chunkCount++;
-        logger.info("Chunk {} has been processed.", chunkCount);
+        int readCount = Math.toIntExact(context.getStepContext().getStepExecution().getReadCount());
+        int writeCount = Math.toIntExact(context.getStepContext().getStepExecution().getWriteCount());
+        log.info("Chunk #{} 완료 - totalRead={}, totalWrite={}", chunkCount, readCount, writeCount);
     }
 
     @Override
     public void afterChunkError(ChunkContext context) {
-        logger.error("Error occurred in chunk {}", chunkCount);
+        Throwable error = (Throwable) context.getAttribute("batch.exception");
+        log.error("Chunk #{} 오류 발생 - step={}", chunkCount,
+            context.getStepContext().getStepName(), error);
     }
 }

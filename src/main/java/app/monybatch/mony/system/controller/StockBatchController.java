@@ -1,6 +1,7 @@
 package app.monybatch.mony.system.controller;
 
 
+import app.monybatch.mony.common.core.utils.DateUtil;
 import app.monybatch.mony.system.service.StockBatchService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +9,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -52,17 +55,26 @@ public class StockBatchController {
 
     }
 
+    @GetMapping("/stock/fetchDartInfoAll")
+    public void fetchDartInfoAll(@RequestParam(name="basDd") String basDd) {
+        log.info("공시정보 Fetch 컨트롤러 - 일자:[{}] ~ [{}]",basDd);
+        List<String> targetDate = DateUtil.getDatesUntilToday(basDd);
+        for(String day : targetDate)
+            service.fetchDartInfoAll(day,true);
+
+    }
+
     @GetMapping("/stock/fetchDartInfo")
-    public void fetchDartInfo(@RequestParam(name="basDd") String basDd) {
-        log.info("공시정보 Fetch 컨트롤러 - 일자:[{}]",basDd);
-        service.fetchDartInfo(basDd,false);
+    public void fetchDartInfo(@RequestParam(name="fromYmd", required = false) String fromYmd, @RequestParam(name="toYmd", required = false) String toYmd) {
+        log.info("공시정보 Fetch 컨트롤러 - 일자:[{}] ~ [{}]",fromYmd,toYmd);
+        service.fetchDartInfo(fromYmd,toYmd,false);
 
     }
 
     @GetMapping("/stock/fetchDartInfoForced")
-    public void fetchDartInfoForced(@RequestParam(name="basDd") String basDd) {
-        log.info("공시정보 Fetch 컨트롤러(강제) - 일자:[{}]",basDd);
-        service.fetchDartInfo(basDd,true);
+    public void fetchDartInfoForced(@RequestParam(name="fromYmd", required = false) String fromYmd, @RequestParam(name="toYmd", required = false) String toYmd) {
+        log.info("공시정보 Fetch 컨트롤러(강제) - 일자:[{}]~ [{}]",fromYmd,toYmd);
+        service.fetchDartInfo(fromYmd,toYmd,true);
 
     }
 

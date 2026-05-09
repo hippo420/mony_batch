@@ -109,20 +109,25 @@ public class StockBatchService {
         }
     }
 
-    public void fetchDartInfo(String basDd, boolean forced) {
+    public void fetchDartInfo(String fromYmd, String toYmd, boolean forced) {
         JobParameters jobParameters = null;
+
+        String fromCond = fromYmd==null ? DateUtil.getDateYmd():fromYmd;
+        String toCond = toYmd==null ? DateUtil.getDateYmd():toYmd;
         try {
             if(forced)
             {
                 jobParameters = new JobParametersBuilder()
-                        .addString("basDd", DateUtil.getDateYmd())
+                        .addString("fromYmd", fromCond)
+                        .addString("toYmd", toCond)
                         .addLong("forced_id", System.currentTimeMillis())
                         .toJobParameters();
                 log.info("Job Parameters: {}", jobParameters);
 
             }else {
                 jobParameters = new JobParametersBuilder()
-                        .addString("basDd", DateUtil.getDateYmd())
+                        .addString("fromYmd", fromCond)
+                        .addString("toYmd", toCond)
                         .toJobParameters();
                 log.info("Job Parameters: {}", jobParameters);
 
@@ -206,4 +211,33 @@ public class StockBatchService {
     }
 
 
+    public void fetchDartInfoAll(String basDd, boolean forced) {
+        JobParameters jobParameters = null;
+        try {
+            if(forced)
+            {
+                jobParameters = new JobParametersBuilder()
+                        .addString("fromYmd", basDd)
+                        .addString("toYmd", basDd)
+                        .addLong("forced_id", System.currentTimeMillis())
+                        .toJobParameters();
+                log.info("Job Parameters: {}", jobParameters);
+
+            }else {
+                jobParameters = new JobParametersBuilder()
+                        .addString("fromYmd", basDd)
+                        .addString("toYmd", basDd)
+                        .toJobParameters();
+                log.info("Job Parameters: {}", jobParameters);
+
+            }
+
+            jobLauncher.run(jobRegistry.getJob("fetchDartInfoJob"),jobParameters);
+        }
+        catch (NoSuchJobException | JobInstanceAlreadyCompleteException | JobExecutionAlreadyRunningException |
+               JobRestartException | JobParametersInvalidException e) {
+            log.error("배치처리오류 {}",e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
 }

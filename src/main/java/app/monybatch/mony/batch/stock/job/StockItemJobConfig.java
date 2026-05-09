@@ -18,9 +18,11 @@ public class StockItemJobConfig {
 
     private final JobRepository jobRepository;
 
+    private final Step truncateStockTempStep;
     private final Step prebatchStep;
-    private final Step batchStep;
-    private final Step afterBatchStep;
+    private final Step kospiBatchStep;
+    private final Step kosdaqBatchStep;
+    private final Step konexBatchStep;
     private final Step dartMappingStep;
 
     @Bean
@@ -33,10 +35,12 @@ public class StockItemJobConfig {
         return new JobBuilder("stockItemJob", jobRepository)
                 .validator(validator)
                 .incrementer(new RunIdIncrementer())
-                .start(prebatchStep)
-                .next(batchStep)
-                .next(afterBatchStep)
-                .next(dartMappingStep)
+                .start(truncateStockTempStep)   // info_stock_temp 초기화
+                .next(prebatchStep)             // info_stock 전체 → info_stock_temp
+                .next(kospiBatchStep)           // KOSPI API → 대사 → info_stock
+                .next(kosdaqBatchStep)          // KOSDAQ API → 대사 → info_stock
+                .next(konexBatchStep)           // KONEX API → 대사 → info_stock
+                .next(dartMappingStep)          // DART 데이터 보완
                 .build();
     }
 }

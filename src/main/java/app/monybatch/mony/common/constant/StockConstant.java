@@ -13,7 +13,9 @@ public class StockConstant {
     //KRX
     public static String KRX_API_KEY;
     public static String KRX_STOCK_URL = "https://data-dbg.krx.co.kr";
-    public static String KRX_STOCK_TRX_URL = "/svc/apis/sto/stk_bydd_trd";
+    public static String KRX_KOSPI_TRX_URL = "/svc/apis/sto/stk_bydd_trd";
+    public static String KRX_KOSDAQ_TRX_URL = "/svc/apis/sto/ksq_bydd_trd";
+    public static String KRX_KONEX_TRX_URL = "/svc/apis/sto/knx_bydd_trd";
     public static String MAX_9999 ="9999";
 
     //DART

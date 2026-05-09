@@ -10,7 +10,7 @@ import lombok.Setter;
                 {
                         @UniqueConstraint(
                                 name = "uk_dart_info",
-                                columnNames = {"id", "rcept_dt","corp_code","rcept_no"} // 순서가 중요!
+                                columnNames = {"rcept_no", "rcept_dt","corp_code"} // 순서가 중요!
                         )
                 },
         indexes = {
@@ -22,9 +22,14 @@ import lombok.Setter;
 @Getter @Setter
 public class DartBasicEntity {
 
+
+    // 접수번호
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    //@GeneratedValue(strategy = GenerationType.U)
+    @JsonProperty("rcept_no")
+    @Column(nullable = false, length = 14)
+    private String RCEPT_NO;
+
 
     // 공시일자
     @JsonProperty("rcept_dt")
@@ -36,10 +41,7 @@ public class DartBasicEntity {
     @Column(updatable = false)
     private String CORP_CODE;
 
-    // 접수번호
-    @JsonProperty("rcept_no")
-    @Column(nullable = false, length = 14)
-    private String RCEPT_NO;
+
 
     @JsonProperty("corp_name")
     @Column(updatable = false)
@@ -69,5 +71,9 @@ public class DartBasicEntity {
     @JsonProperty("rm")
     @Column
     private String RM;
+
+    @JsonProperty("proc_yn")
+    @Column
+    private String PROC_YN;
 
 }

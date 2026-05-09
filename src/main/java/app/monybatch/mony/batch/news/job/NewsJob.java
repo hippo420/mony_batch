@@ -36,6 +36,7 @@ import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.support.CompositeItemProcessor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import java.util.ArrayList;
@@ -58,7 +59,7 @@ public class NewsJob {
     private final NewsParserFactory parserFactory; // VectorStore 주입 추가
 
     // --- 스케줄러 (5분마다 실행) ---
-    //@Scheduled(cron = "0 */10 * * * *") // 5분마다 실행
+    @Scheduled(cron = "0 */10 * * * *") // 5분마다 실행
     public void runNewsCollectionJob() {
         try {
             JobParameters jobParameters = new JobParametersBuilder()

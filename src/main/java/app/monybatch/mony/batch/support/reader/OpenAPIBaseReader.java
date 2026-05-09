@@ -85,7 +85,7 @@ public abstract class OpenAPIBaseReader<T> {
         //log.info("data =[{}]",data);
         if (data != null) {
             List<T> result = JsonUtil.convert(new org.json.JSONObject(data.toJSONString()), keyCode, clazz);
-            // ✅ KIS API인 경우 리플렉션을 사용하여 종목 코드 주입
+            // KIS API인 경우 리플렉션을 사용하여 종목 코드 주입
             if ("KIS".equals(this.key) && !result.isEmpty()) {
                 //result.forEach(item -> log.info("Item: {}", item));
 
@@ -109,10 +109,10 @@ public abstract class OpenAPIBaseReader<T> {
                     }
                 }
             }
-            //log.info("✅ [{}] Fetch 성공: {} 건", this.key, result.size());
+            log.info("[{}] Fetch 성공: {} 건", path, result.size());
             return result;
         } else {
-            log.info("⚠️ [{}] Fetch 결과 없음", this.key);
+            log.info("[{}] Fetch 결과 없음", this.key);
             return Collections.emptyList();
         }
     }
