@@ -1,5 +1,6 @@
 package app.monybatch.mony.infra.llm;
 
+import app.monybatch.mony.domian.earning.dto.EarningsReleaseDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -45,6 +46,39 @@ public class OllamaModelClient  {
             );
 
             Map<String, Object> response = postRequest("/api/generate", body);
+            return Objects.requireNonNull(response).get("response").toString();
+        });
+    }
+
+    // 1. LLM이 반환해야 할 결과물의 구조(JSON Schema)를 Map으로 정의합니다.
+    // 예: { "topic": "문자열", "sentiment": "문자열", "summary": "문자열" }
+    //            Map<String, Object> jsonSchema = Map.of(
+    //                    "type", "object",
+    //                    "properties", Map.of(
+    //                            "topic", Map.of("type", "string"),
+    //                            "sentiment", Map.of("type", "string"),
+    //                            "summary", Map.of("type", "string")
+    //                    ),
+    //                    "required", List.of("topic", "sentiment", "summary")
+    //            );
+    public String generateJSON(String prompt, Map<String, Object> jsonSchema) {
+        return executeWithTimer("Generate API", () -> {
+            Map<String, Object> options = Map.of(
+                    "temperature", 0.2       // 0.0일수록 결정론적(정확), 높을수록 창의적
+            );
+
+            Map<String, Object> body = Map.of(
+                    "model", model,
+                    "prompt", PROMT_COND + prompt,
+                    "stream", false,
+                    "options", options,
+                    "format", jsonSchema  // 이 부분이 핵심입니다!
+            );
+
+            Map<String, Object> response = postRequest("/api/generate", body);
+
+            // 이제 이 response 안에는 백틱(```json)이나 쓸데없는 설명 없이
+            // 100% 순수한 JSON 문자열만 담겨 나오므로 바로 파싱하셔도 안전합니다.
             return Objects.requireNonNull(response).get("response").toString();
         });
     }
@@ -170,6 +204,134 @@ public class OllamaModelClient  {
             }
         }
         return finalResult.toString();
+    }
+
+    /**
+     * 영업(잠정)실적 공시 보고서(표 → JSON)를 분석/요약한다.
+     *
+     * DartHtmlToJsonParser.parseXmlFile 로 추출한 실적 표 JSON 을 입력받아
+     * 핵심 실적 + 투자 감성을 요약한다.
+     *
+     * @param corpNm     기업명
+     * @param stockCode  종목코드
+     * @param data 실적 표를 추출한 JSON 문자열
+     * @param revenueYoy 실적 표를 추출한 JSON 문자열
+     * @param revenueQoq 실적 표를 추출한 JSON 문자열
+     * @param profitYoy 실적 표를 추출한 JSON 문자열
+     * @param profitQoq 실적 표를 추출한 JSON 문자열
+     * @return "종목코드|기업명|요약|감성|감성근거" 형태의 요약 문자열
+     */
+    public String summarizePerformanceDisclosure(String corpNm, String stockCode, EarningsReleaseDto data ,String revenueYoy, String revenueQoq,String profitYoy, String profitQoq) {
+        // String.format 대신 치환자({{변수명}})를 적용한 템플릿 사용
+        String promptTemplate = """
+            당신은 기업의 실적 공시 자료를 분석하는 전문 금융 AI입니다.
+            제공된 공시 텍스트를 분석하여 다음 요구사항을 엄격하게 준수하여 응답하세요.
+            
+            
+            [요구사항]
+             1. 데이터 추출: 매출액, 영업이익, 당기순이익을 추출하세요. 데이터가 없으면 null로 표기하세요.
+             2. 당기순이익이 없는 경우에는 잠정실적임, 실적데이터 기준으로만 분석할 것
+             3. 투자 감성 분석: 실적의 투자 관점 감성을 'POSITIVE'(투자긍정), 'NEUTRAL'(투자중립), 'NEGATIVE'(투자위험) 중 하나로 반드시 분류하세요.
+             4. 금액은 반드시 원 단위로 계산할 것, raw데이터의 단위를 환산해서 계산할 것. 
+             5. 요약: 전체 실적에 대한 핵심 요약을 데이터의 기반해서 작성할 것, 의견이 아님. 당기순이익없는 경우 잠정실적임을 감안할것
+             6. 출력 형식: 어떠한 부가 설명이나 인사말 없이 오직 아래의 JSON 형식으로만 결과를 반환하세요.
+
+             [출력 JSON 구조]
+             {
+               "sentiment": "POSITIVE | NEUTRAL | NEGATIVE",
+               "summary": "1분기 실적은 52조이며, 영업이익은 30조, 영업익률은 60%를 상회"
+             }
+            
+            종목코드: {{STOCK_CODE}}
+            기업명: {{CORP_NAME}}
+            -실적데이터
+             매출액: {{REVENUE}}
+             YoY : {{REVENUE_YOY}}%
+             QoQ : {{REVENUE_QOQ}}%
+            
+             영업이익: {{PROFIT}}
+             YoY : {{PROFIT_YOY}}%
+             QoQ : {{PROFIT_QOQ}}%
+            
+             당기순이익: {{INCOME}}
+             
+            {{PARSED_JSON}}
+            
+            
+            """;
+
+        // 연쇄적인 replace() 호출을 통해 값을 주입합니다.
+        String prompt = promptTemplate
+                .replace("{{STOCK_CODE}}", stockCode)
+                .replace("{{CORP_NAME}}", corpNm)
+                .replace("{{REVENUE}}", data.getRevenue() != null ? data.getRevenue().toString() : "없음")
+                .replace("{{REVENUE_YOY}}", revenueYoy)
+                .replace("{{REVENUE_QOQ}}", revenueQoq)
+                .replace("{{PROFIT}}", data.getOperatingProfit() != null ? data.getOperatingProfit().toString() : "없음")
+                .replace("{{INCOME}}", data.getNetIncome()  != null ? data.getNetIncome().toString() : "없음")
+                .replace("{{PROFIT_YOY}}", profitYoy)
+                .replace("{{PROFIT_QOQ}}", profitQoq);
+
+
+        log.info("실적 공시 요약 요청: corpNm={}, stockCode={}", corpNm, stockCode);
+        String result = generate(prompt);
+        log.info("실적 공시 요약 결과: {}", result);
+
+        return result;
+    }
+
+    /**
+     * 영업(잠정)실적 공시 보고서(표 → JSON)를 분석/요약한다.
+     *
+     * DartHtmlToJsonParser.parseXmlFile 로 추출한 실적 표 JSON 을 입력받아
+     * 핵심 실적 + 투자 감성을 요약한다.
+     *
+     * @param corpNm     기업명
+     * @param stockCode  종목코드
+     * @param parsedJson 실적 표를 추출한 JSON 문자열
+     * @return "종목코드|기업명|요약|감성|감성근거" 형태의 요약 문자열
+     */
+    public String getEarningRelease(String corpNm, String stockCode, String parsedJson) {
+        // String.format 대신 치환자({{변수명}})를 적용한 템플릿 사용
+        String promptTemplate = """
+            당신은 기업의 실적 공시 자료를 분석하는 전문 금융 AI입니다.
+            제공된 공시 텍스트를 분석하여 다음 요구사항을 엄격하게 준수하여 응답하세요.
+            
+            [요구사항]
+             1. 데이터 추출: 매출액, 영업이익, 당기순이익을 추출하세요.
+             2. 금액은 반드시 원 단위로 계산할 것, raw데이터의 단위를 환산해서 계산할 것.
+             3. 금액부분이 숫자가 아니면 NULL 처리할 것.
+             4. 출력 형식: 어떠한 부가 설명이나 인사말 없이 오직 아래의 JSON 형식으로만 결과를 반환하세요.
+  
+             [출력 JSON 구조]
+             {          
+               "isuSrtCd": "STOCK_CODE",
+               "reportYear": "연도 (예: 2026)".
+               "reportQuarter": "Q1 (예: Q1, Q2, Q3, Q4, YEAR",
+               "revenue":"매출액 (단위 원,precision = 19, scale = 4)",
+               "operatingProfit":"영업이익 (단위 원,precision = 19, scale = 4)",
+               "netIncome":"당기순이익 (단위 원,precision = 19, scale = 4)",
+             }
+            
+            종목코드: {{STOCK_CODE}}
+            기업명: {{CORP_NAME}}
+            실적데이터(JSON):
+            {{PARSED_JSON}}
+            
+            
+            """;
+
+        // 연쇄적인 replace() 호출을 통해 값을 주입합니다.
+        String prompt = promptTemplate
+                .replace("{{STOCK_CODE}}", stockCode)
+                .replace("{{CORP_NAME}}", corpNm)
+                .replace("{{PARSED_JSON}}", parsedJson);
+
+        log.info("실적 공시 요약 요청: corpNm={}, stockCode={}", corpNm, stockCode);
+        String result = generate(prompt);
+        log.info("실적 공시 요약 결과: {}", result);
+
+        return result;
     }
 
     /**

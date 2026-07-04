@@ -27,8 +27,16 @@ public class StockProcessor implements ItemProcessor<Stock, Stock> {
             item.setINDUTY_CODE(temp.getINDUTY_CODE());
             item.setEST_DT(temp.getEST_DT());
             item.setACC_MT(temp.getACC_MT());
-            item.setIndustCode(temp.getIndustCode());
+            // industry_code(FK)는 별도 쿼리로 수동 관리하는 값이므로 배치에서 보존
+            item.setIndustryCode(temp.getIndustryCode());
         });
+
+        // 관리종목(소속부없음)이면 상장폐지 대상(Y), 벗어나면 N으로 복원
+        if ("관리종목(소속부없음)".equals(item.getSECT_TP_NM())) {
+            item.setDELIST_YN("Y");
+        } else {
+            item.setDELIST_YN("N");
+        }
         return item;
     }
 }

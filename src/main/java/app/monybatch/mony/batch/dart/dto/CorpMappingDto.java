@@ -9,6 +9,7 @@ import lombok.Setter;
 public class CorpMappingDto {
     private String corpCode;  // 고유번호
     private String corpNm;    // 회사명
+    private String corpNm2;    // 회사명2
     private String stockCode; // 종목코드
 
     public CorpMappingDto() {

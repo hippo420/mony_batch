@@ -29,11 +29,14 @@ public class CorpCodeRegistry {
         for (Tuple tuple : results) {
             String stockCode = tuple.get("stockCode", String.class);
             String corpNm = tuple.get("corpNm", String.class);
+            String corpNm2 = tuple.get("corpNm2", String.class);
             String corpCode = tuple.get("corpCode", String.class);
 
-            CorpMappingDto dto = new CorpMappingDto(corpCode, corpNm, stockCode);
+            CorpMappingDto dto = new CorpMappingDto(corpCode, corpNm, corpNm2, stockCode);
             localCorpCache.put(corpNm, dto);
-            //log.info("{} {} {}",dto.getCorpCode(), dto.getCorpNm(), dto.getStockCode());
+            if (corpNm2 != null && !corpNm2.isBlank()) {
+                localCorpCache.put(corpNm2, dto);
+            }
         }
         log.info("localCorpCache 로드 완료 : {}건",localCorpCache.size());
     }

@@ -170,7 +170,6 @@ public class DartMappingProcessor implements ItemProcessor<Stock, Stock> {
         if (corpCode == null) return item;
 
         item.setCORP_CODE(corpCode);
-        item.setIndustryCode(null);
 
         DartCorpInfo info = corpInfoMap.get(srtCd);
         if (info != null) {
@@ -182,7 +181,6 @@ public class DartMappingProcessor implements ItemProcessor<Stock, Stock> {
             item.setACC_MT(info.getAccMt());
             item.setHM_URL(info.getHmUrl());
             item.setIR_URL(info.getIrUrl());
-            //item.setIndustCode(info.getIndutyCode());
         }
 
         return item;

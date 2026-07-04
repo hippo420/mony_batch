@@ -71,10 +71,10 @@ public class DartRssItemReader implements ItemReader<DartRssDto> {
                     String corpNm = parts[0].trim();
 
                     CorpMappingDto corp = registry.getCorpInfo(corpNm);
-                    if(corp != null)
-                    {
-                        dto.setStockCode(corp.getStockCode());
+                    if (corp != null) {
                         dto.setCorpCode(corp.getCorpCode());
+                        dto.setStockCode(corp.getStockCode());
+                        dto.setCorpNm2(corp.getCorpNm2());
                     }
                     dto.setCorpNm(corpNm);
                     dto.setReportNm(parts[1].trim());

@@ -264,4 +264,80 @@ public class OpenAPIUtil {
         return jsonObject;
     }
 
+    /**
+     * OpenDART 원본 문서 API(/api/document.xml)를 호출해 공시 원본 보고서 XML 을 반환한다.
+     *
+     * 응답은 ZIP 파일이며, 압축을 풀면 보고서 본문(파일명 {rceptNo}.xml)이 들어 있다.
+     * 영업(잠정)실적 공시처럼 JSON API 가 없는 공시를 LLM 으로 분석하기 위한 본문 추출 용도.
+     *
+     * @param rceptNo 접수번호(보고서번호, RSS link 의 rcpNo)
+     * @return 보고서 본문 XML 문자열. 실패 시 null
+     */
+    public static String requestDartDocument(String rceptNo) {
+        WebClient webClient = WebClient.builder()
+                .baseUrl(StockConstant.DART_API_URL)
+                .exchangeStrategies(ExchangeStrategies.builder()
+                        .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(32 * 1024 * 1024))
+                        .build())
+                .build();
+
+        Path zipFile;
+        try {
+            zipFile = Files.createTempFile("dart-document-", ".zip");
+        } catch (IOException e) {
+            log.error("문서 임시파일 생성 실패: {}", e.getMessage());
+            return null;
+        }
+
+        Flux<DataBuffer> dataBufferFlux = webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/api/document.xml")
+                        .queryParam("crtfc_key", StockConstant.DART_KEY)
+                        .queryParam("rcept_no", rceptNo)
+                        .build())
+                .retrieve()
+                .bodyToFlux(DataBuffer.class)
+                .doOnDiscard(DataBuffer.class, DataBufferUtils::release);
+
+        try {
+            DataBufferUtils.write(
+                    dataBufferFlux,
+                    zipFile,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING,
+                    StandardOpenOption.WRITE
+            ).block();
+
+            // ZIP 해제 → 보고서 XML 추출
+            Path destDir = Files.createTempDirectory("dart-document-" + rceptNo + "-");
+            ZipUtil.unzip(zipFile.toAbsolutePath().toString(), destDir.toAbsolutePath().toString());
+
+            // 일반적으로 압축 내부 파일명은 {rceptNo}.xml. 없으면 첫 번째 .xml 사용
+            Path reportXml = destDir.resolve(rceptNo + ".xml");
+            if (!Files.exists(reportXml)) {
+                try (var stream = Files.list(destDir)) {
+                    reportXml = stream
+                            .filter(p -> p.toString().toLowerCase().endsWith(".xml"))
+                            .findFirst()
+                            .orElse(null);
+                }
+            }
+            if (reportXml == null || !Files.exists(reportXml)) {
+                log.error("문서 XML 을 찾을 수 없음: rceptNo={}", rceptNo);
+                return null;
+            }
+
+            return Files.readString(reportXml);
+        } catch (Exception e) {
+            log.error("DART 문서 다운로드/압축해제 실패: rceptNo={}, error={}", rceptNo, e.getMessage());
+            return null;
+        } finally {
+            try {
+                Files.deleteIfExists(zipFile);
+            } catch (IOException ignored) {
+                // 임시파일 정리 실패는 무시
+            }
+        }
+    }
+
 }

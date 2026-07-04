@@ -1,5 +1,6 @@
 package app.monybatch.mony.batch.support.reader;
 
+import app.monybatch.mony.batch.support.ratelimit.KisApiRateLimiter;
 import app.monybatch.mony.common.constant.DataType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemReader;
@@ -22,7 +23,15 @@ public class OpenAPIItemReader<T> extends OpenAPIBaseReader<T> implements ItemRe
     }
 
     public OpenAPIItemReader(Class<T> clazz, MultiValueMap<String, String> params, String key, String path, DataType datatype, ConcurrentHashMap<String, String> headers, String isuSrtCd) {
-        super(clazz, params, key, path, datatype, headers,isuSrtCd);
+        super(clazz, params, key, path, datatype, headers, isuSrtCd);
+    }
+
+    public OpenAPIItemReader(Class<T> clazz, MultiValueMap<String, String> params, String key, String path, DataType datatype, ConcurrentHashMap<String, String> headers, String isuSrtCd, long delayMs) {
+        super(clazz, params, key, path, datatype, headers, isuSrtCd, delayMs);
+    }
+
+    public OpenAPIItemReader(Class<T> clazz, MultiValueMap<String, String> params, String key, String path, DataType datatype, ConcurrentHashMap<String, String> headers, String isuSrtCd, KisApiRateLimiter rateLimiter) {
+        super(clazz, params, key, path, datatype, headers, isuSrtCd, rateLimiter);
     }
 
     @Override

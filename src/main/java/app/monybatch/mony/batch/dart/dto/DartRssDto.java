@@ -14,8 +14,8 @@ public class DartRssDto extends CorpMappingDto{
     private String firNm;     // 카테고리
     private Date pubDate;     // 발행일
 
-    public DartRssDto(String corpCode, String corpNm, String stockCode) {
-        super(corpCode, corpNm, stockCode);
+    public DartRssDto(String corpCode, String corpNm, String corpNm2, String stockCode) {
+        super(corpCode, corpNm, corpNm2, stockCode);
     }
     public DartRssDto() {
         super();

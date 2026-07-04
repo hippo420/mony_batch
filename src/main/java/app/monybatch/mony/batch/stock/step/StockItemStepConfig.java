@@ -3,6 +3,7 @@ package app.monybatch.mony.batch.stock.step;
 import app.monybatch.mony.batch.support.reader.OpenAPIItemReader;
 import app.monybatch.mony.domian.stock.entity.Stock;
 import app.monybatch.mony.domian.stock.entity.StockTemp;
+import app.monybatch.mony.domian.stock.repository.StockRepository;
 import app.monybatch.mony.domian.stock.repository.StockTempRepository;
 import jakarta.persistence.EntityManagerFactory;
 import lombok.AllArgsConstructor;
@@ -28,6 +29,7 @@ public class StockItemStepConfig {
     private final PlatformTransactionManager batchTransactionManager;
 
     private final StockTempRepository stockTempRepository;
+    private final StockRepository stockRepository;
 
     private final OpenAPIItemReader<Stock> stockApiReader;
     private final OpenAPIItemReader<Stock> stockApiKosdaqReader;
@@ -61,6 +63,18 @@ public class StockItemStepConfig {
                 .name("stockDbReader")
                 .entityManagerFactory(entityManagerFactory)
                 .queryString("SELECT s FROM Stock s")
+                .build();
+    }
+
+    // info_stock 전체를 상폐(Y)로 선마킹 → 이후 API step에서 살아있는 종목만 N/관리종목 Y로 복원.
+    // KRX API 응답에 없는(완전 상폐된) 종목은 Y로 남는다.
+    @Bean
+    public Step markAllDelistStep() {
+        return new StepBuilder("markAllDelistStep", jobRepository)
+                .tasklet((contribution, chunkContext) -> {
+                    stockRepository.markAllAsDelisted();
+                    return RepeatStatus.FINISHED;
+                }, batchTransactionManager)
                 .build();
     }
 

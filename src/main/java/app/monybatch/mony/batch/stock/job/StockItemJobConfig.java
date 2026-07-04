@@ -20,6 +20,7 @@ public class StockItemJobConfig {
 
     private final Step truncateStockTempStep;
     private final Step prebatchStep;
+    private final Step markAllDelistStep;
     private final Step kospiBatchStep;
     private final Step kosdaqBatchStep;
     private final Step konexBatchStep;
@@ -37,7 +38,8 @@ public class StockItemJobConfig {
                 .incrementer(new RunIdIncrementer())
                 .start(truncateStockTempStep)   // info_stock_temp 초기화
                 .next(prebatchStep)             // info_stock 전체 → info_stock_temp
-                .next(kospiBatchStep)           // KOSPI API → 대사 → info_stock
+                .next(markAllDelistStep)        // info_stock 전체 DELIST_YN=Y 선마킹 (완전 상폐 검출용)
+                .next(kospiBatchStep)           // KOSPI API → 대사 → info_stock (생존 종목 N/관리종목 Y)
                 .next(kosdaqBatchStep)          // KOSDAQ API → 대사 → info_stock
                 .next(konexBatchStep)           // KONEX API → 대사 → info_stock
                 .next(dartMappingStep)          // DART 데이터 보완

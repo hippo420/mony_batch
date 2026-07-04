@@ -211,6 +211,28 @@ public class StockBatchService {
     }
 
 
+    public void fetchPileTrade(String basDd, boolean forced) {
+        JobParameters jobParameters;
+        try {
+            if (forced) {
+                jobParameters = new JobParametersBuilder()
+                        .addString("basDd", basDd)
+                        .addLong("forced_id", System.currentTimeMillis())
+                        .toJobParameters();
+            } else {
+                jobParameters = new JobParametersBuilder()
+                        .addString("basDd", basDd)
+                        .toJobParameters();
+            }
+            log.info("Job Parameters: {}", jobParameters);
+            jobLauncher.run(jobRegistry.getJob("pileTradeJob"), jobParameters);
+        } catch (NoSuchJobException | JobInstanceAlreadyCompleteException | JobExecutionAlreadyRunningException |
+                 JobRestartException | JobParametersInvalidException e) {
+            log.error("배치처리오류 {}", e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
+
     public void fetchDartInfoAll(String basDd, boolean forced) {
         JobParameters jobParameters = null;
         try {

@@ -1,5 +1,6 @@
 package app.monybatch.mony.common.core.utils;
 
+import app.monybatch.mony.domian.earning.dto.ReportQuarter;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -176,6 +177,42 @@ public class DateUtil {
     public static String toStringDateTime(LocalDateTime dateTime) {
         return dateTime == null ? null : dateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     }
+
+    public static String getCurrentYear() {
+        return String.valueOf(LocalDate.now().getYear());
+    }
+
+    // offset: -1=전년도, 0=현재, 1=내년도
+    public static String getCurrentYearByInt(int offset) {
+        return String.valueOf(LocalDate.now().getYear() + offset);
+    }
+
+    public static ReportQuarter getCurrentReportQuarter() {
+        int month = LocalDate.now().getMonthValue();
+        if (month <= 3) return ReportQuarter.Q1;
+        if (month <= 6) return ReportQuarter.Q2;
+        if (month <= 9) return ReportQuarter.Q3;
+        return ReportQuarter.Q4;
+    }
+
+    // offset: -1=전분기, 0=현재, 1=다음분기 (1~4 순환)
+    public static ReportQuarter getCurrentReportQuarterByInt(int offset) {
+        int month = LocalDate.now().getMonthValue();
+        int current;
+        if (month <= 3) current = 1;
+        else if (month <= 6) current = 2;
+        else if (month <= 9) current = 3;
+        else current = 4;
+        int result = ((current - 1 + offset) % 4 + 4) % 4 + 1;
+        return switch (result) {
+            case 1 -> ReportQuarter.Q1;
+            case 2 -> ReportQuarter.Q2;
+            case 3 -> ReportQuarter.Q3;
+            default -> ReportQuarter.Q4;
+        };
+    }
+
+
 
     /**
      * 특정 시작일자부터 현재일자까지의 날짜 목록을 YYYYMMDD 포맷의 리스트로 반환합니다.

@@ -15,9 +15,9 @@ import java.math.BigDecimal;
             )
         },
         indexes = {
-                @Index(name = "idx_basymd", columnList = "basymd"),
-                @Index(name = "idx_company", columnList = "company"),
-                @Index(name = "idx_item", columnList = "item")
+                @Index(name = "idx_report_basymd", columnList = "basymd"),
+                @Index(name = "idx_report_company", columnList = "company"),
+                @Index(name = "idx_report_item", columnList = "item")
         }
       )
 public class Report {

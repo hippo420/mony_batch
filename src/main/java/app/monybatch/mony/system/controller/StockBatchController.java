@@ -105,4 +105,16 @@ public class StockBatchController {
         service.fetchInvestorTrade(basDd,true);
 
     }
+
+    @GetMapping("/stock/fetchPileTrade")
+    public void fetchPileTrade(@RequestParam(name="basDd") String basDd) {
+        log.info("종목별 투자자 매매동향 - Fetch 컨트롤러 - 일자:[{}]",basDd);
+        service.fetchPileTrade(basDd,false);
+    }
+
+    @GetMapping("/stock/fetchPileTradeForced")
+    public void fetchPileTradeForced(@RequestParam(name="basDd") String basDd) {
+        log.info("종목별 투자자 매매동향 - Fetch 컨트롤러(강제) - 일자:[{}]",basDd);
+        service.fetchPileTrade(basDd,true);
+    }
 }

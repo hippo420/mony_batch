@@ -35,7 +35,8 @@ public class StockTempProcessor implements ItemProcessor<Stock, StockTemp> {
         temp.setINDUTY_CODE(item.getINDUTY_CODE());
         temp.setEST_DT(item.getEST_DT());
         temp.setACC_MT(item.getACC_MT());
-        temp.setIndustCode(item.getIndustCode());
+        // industry_code(FK)는 별도 쿼리로 수동 관리하는 값이므로 배치에서 보존
+        temp.setIndustryCode(item.getIndustryCode());
         return temp;
     }
 }

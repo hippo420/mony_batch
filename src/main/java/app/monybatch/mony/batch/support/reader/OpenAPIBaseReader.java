@@ -1,5 +1,6 @@
 package app.monybatch.mony.batch.support.reader;
 
+import app.monybatch.mony.batch.support.ratelimit.KisApiRateLimiter;
 import app.monybatch.mony.common.constant.DataType;
 import app.monybatch.mony.common.core.utils.JsonUtil;
 import app.monybatch.mony.common.core.utils.OpenAPIUtil;
@@ -25,8 +26,10 @@ public abstract class OpenAPIBaseReader<T> {
     protected final DataType datatype;
     protected final ConcurrentHashMap<String, String> headers;
     protected String isuSrtCd;
+    protected final long delayMs;
+    protected KisApiRateLimiter kisApiRateLimiter;
 
-    protected OpenAPIBaseReader(Class<T> clazz, MultiValueMap<String, String> params, String key, String path, DataType datatype, ConcurrentHashMap<String, String> headers, String isuSrtCd) {
+    protected OpenAPIBaseReader(Class<T> clazz, MultiValueMap<String, String> params, String key, String path, DataType datatype, ConcurrentHashMap<String, String> headers, String isuSrtCd, long delayMs) {
         this.clazz = clazz;
         this.params = params;
         this.key = key;
@@ -34,15 +37,21 @@ public abstract class OpenAPIBaseReader<T> {
         this.datatype = datatype;
         this.headers = headers;
         this.isuSrtCd = isuSrtCd;
+        this.delayMs = delayMs;
+    }
+
+    // RateLimiter 사용 생성자 (delayMs 무시, 멀티스레드 환경)
+    protected OpenAPIBaseReader(Class<T> clazz, MultiValueMap<String, String> params, String key, String path, DataType datatype, ConcurrentHashMap<String, String> headers, String isuSrtCd, KisApiRateLimiter rateLimiter) {
+        this(clazz, params, key, path, datatype, headers, isuSrtCd, 0L);
+        this.kisApiRateLimiter = rateLimiter;
+    }
+
+    protected OpenAPIBaseReader(Class<T> clazz, MultiValueMap<String, String> params, String key, String path, DataType datatype, ConcurrentHashMap<String, String> headers, String isuSrtCd) {
+        this(clazz, params, key, path, datatype, headers, isuSrtCd, 200);
     }
 
     protected OpenAPIBaseReader(Class<T> clazz, MultiValueMap<String, String> params, String key, String path, DataType datatype, ConcurrentHashMap<String, String> headers) {
-        this.clazz = clazz;
-        this.params = params;
-        this.key = key;
-        this.path = path;
-        this.datatype = datatype;
-        this.headers = headers;
+        this(clazz, params, key, path, datatype, headers, null, 200);
     }
 
     // 공통 로직: API 호출 후 List<T> 반환
@@ -67,18 +76,29 @@ public abstract class OpenAPIBaseReader<T> {
             throw new InvalidParameterException("적절한 Key값을 넣어야 합니다.");
         }
 
-        JSONObject data;
+        JSONObject data=null;
         if (!"NEWS".equals(this.key)) {
             if ("KIS".equals(key)) {
                 try {
-                    Thread.sleep(200);
+                    if (kisApiRateLimiter != null) {
+                        kisApiRateLimiter.acquire();
+                    } else {
+                        Thread.sleep(delayMs);
+                    }
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     log.error("Sleep interrupted", e);
                 }
             }
-            data = OpenAPIUtil.requestApiFromFile(URL, path, params, headers, datatype);
-
+            try {
+                data = OpenAPIUtil.requestApiFromFile(URL, path, params, headers, datatype);
+            }catch (Exception e)
+            {
+                if(params.containsKey("FID_INPUT_ISCD"))
+                {
+                    log.error("[{}] 종목조회중 오류발생",params.get("FID_INPUT_ISCD"));
+                }
+            }
         } else {
             data = OpenAPIUtil.requestApi(URL, path, params, headers, datatype);
         }

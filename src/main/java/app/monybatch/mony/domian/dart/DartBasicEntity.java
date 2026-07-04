@@ -14,9 +14,9 @@ import lombok.Setter;
                         )
                 },
         indexes = {
-                @Index(name = "idx_basymd", columnList = "rcept_dt"),
-                @Index(name = "idx_corp_code", columnList = "corp_code"),
-                @Index(name = "idx_rcept_no", columnList = "rcept_no")
+                @Index(name = "idx_dart_rcept_dt", columnList = "rcept_dt"),
+                @Index(name = "idx_dart_corp_code", columnList = "corp_code"),
+                @Index(name = "idx_dart_rcept_no", columnList = "rcept_no")
         })
 @Entity
 @Getter @Setter

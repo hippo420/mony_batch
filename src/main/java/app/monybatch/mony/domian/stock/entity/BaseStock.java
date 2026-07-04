@@ -75,6 +75,10 @@ public class BaseStock extends CommonEntitiy {
     @Column(name ="ISU_ABBRV")
     private String ISU_ABBRV;
 
+    @JsonProperty("ISU_ABBRV2")
+    @Column(name ="ISU_ABBRV2")
+    private String ISU_ABBRV2;
+
     @JsonProperty("ISU_ENG_NM")
     @Column(name ="ISU_ENG_NM")
     private String ISU_ENG_NM;
@@ -110,10 +114,11 @@ public class BaseStock extends CommonEntitiy {
     /* 업종 코드 */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "industry_code")
-    private IndustryCode industryCode;
+    private IndustryCode  industryCode;
 
-    @Column(name ="INDUST_CODE")
-    private String industCode;
+    /*상폐여부*/
+    @Column(name ="DELIST_YN")
+    private String DELIST_YN;
 
     /* 테마 코드 */
     @ManyToOne(fetch = FetchType.LAZY)
