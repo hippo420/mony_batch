@@ -1,6 +1,7 @@
 package app.monybatch.mony.batch.dart.job;
 
 import app.monybatch.mony.batch.support.parameter.DescriptiveJob;
+import app.monybatch.mony.batch.support.parameter.JobParamSpec;
 import app.monybatch.mony.batch.support.reader.OpenAPIItemReader;
 import app.monybatch.mony.common.constant.AppConst;
 import app.monybatch.mony.common.constant.DartConst;
@@ -56,7 +57,11 @@ public class DartInfoJob {
                 .start(readDartInfoStep())
                 .build();
         jobRegistry.register(new ReferenceJobFactory(job));
-        return new DescriptiveJob(job, "DART 공시내역 배치 처리");
+        // 키 자체는 validator 필수지만 빈값이면 오늘 날짜로 동작 — 화면 입력은 선택으로 노출
+        return new DescriptiveJob(job, "DART 공시내역 배치 처리", List.of(
+                new JobParamSpec("fromYmd", "조회 시작일 (빈값이면 오늘)", "yyyyMMdd", "", false),
+                new JobParamSpec("toYmd", "조회 종료일 (빈값이면 오늘)", "yyyyMMdd", "", false)
+        ));
     }
 
 

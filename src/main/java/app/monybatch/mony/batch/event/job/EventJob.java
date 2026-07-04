@@ -4,15 +4,13 @@ import app.monybatch.mony.batch.event.processor.EconomicEventProcessor;
 import app.monybatch.mony.batch.event.reader.HtmlItemReader;
 import app.monybatch.mony.batch.event.writer.EconomicEventItemWriter;
 import app.monybatch.mony.batch.support.parameter.DescriptiveJob;
-import app.monybatch.mony.common.core.utils.DateUtil;
+import app.monybatch.mony.batch.support.parameter.JobParamSpec;
 import app.monybatch.mony.domian.event.dto.EconomicEventDto;
 import app.monybatch.mony.domian.event.entity.EconomicEvent;
 import app.monybatch.mony.domian.event.repository.EconomicEventRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
-import org.springframework.batch.core.JobParameters;
-import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.DuplicateJobException;
 import org.springframework.batch.core.configuration.JobRegistry;
@@ -20,7 +18,6 @@ import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.configuration.support.ReferenceJobFactory;
 import org.springframework.batch.core.job.DefaultJobParametersValidator;
 import org.springframework.batch.core.job.builder.JobBuilder;
-import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
@@ -39,24 +36,10 @@ public class EventJob {
     // --- 주입되는 컴포넌트 ---
     private final JobRepository jobRepository;
     private final JobRegistry jobRegistry;
-    private final JobLauncher jobLauncher; // JobLauncher 주입
     private final EconomicEventRepository eventRepository;
     private final PlatformTransactionManager batchTransactionManager;
 
-    // --- 스케줄러 (5분마다 실행) ---
-    //@Scheduled(cron = "0 */5 * * * *") // 5분마다 실행
-    public void runEconomivEventCollectionJob() {
-        try {
-            JobParameters jobParameters = new JobParametersBuilder()
-                    .addString("basDd", DateUtil.getDateYmd())
-                    .addLong("time", System.currentTimeMillis()) // JobInstance를 다르게 하기 위해 현재 시간을 파라미터로 추가
-                    .toJobParameters();
-            jobLauncher.run(economicEventCollectionJob().getJob(), jobParameters);
-        } catch (Exception e) {
-            log.error("Error running newsCollectionJob", e);
-        }
-    }
-
+    // 실행 주기는 모니터링 화면의 스케줄 설정(batch_schedule_config)에서 관리 — DynamicBatchScheduler 참고
 
     // --- Job 정의 ---
     @Bean
@@ -73,7 +56,9 @@ public class EventJob {
                 .start(batchEventStep())
                 .build();
         jobRegistry.register(new ReferenceJobFactory(job));
-        return new DescriptiveJob(job, "금융 캘린더 주간 조회 배치");
+        return new DescriptiveJob(job, "금융 캘린더 주간 조회 배치", List.of(
+                new JobParamSpec("basDd", "기준일자 (빈값이면 오늘)", "yyyyMMdd", "", false)
+        ));
     }
 
     // --- Step 정의 ---

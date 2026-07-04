@@ -33,6 +33,9 @@ public class ConfigPropertiesLogger {
 
         for (String key : keys) {
             String value = environment.getProperty(key);
+            if (key.toLowerCase().contains("password") && value != null) {
+                value = "****";
+            }
             log.info("📌 {} = {}", key, value);
         }
     }

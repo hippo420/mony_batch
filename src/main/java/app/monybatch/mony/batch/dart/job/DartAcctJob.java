@@ -1,6 +1,7 @@
 package app.monybatch.mony.batch.dart.job;
 
 import app.monybatch.mony.batch.support.parameter.DescriptiveJob;
+import app.monybatch.mony.batch.support.parameter.JobParamSpec;
 import app.monybatch.mony.batch.support.reader.OpenAPIItemReader;
 import app.monybatch.mony.common.constant.DataType;
 import app.monybatch.mony.domian.dart.DartAccountEntity;
@@ -51,7 +52,11 @@ public class DartAcctJob {
                 .start(readDartAcctStep())
                 .build();
         jobRegistry.register(new ReferenceJobFactory(job));
-        return new DescriptiveJob(job, "DART 재무정보(단일회사) 배치 처리");
+        return new DescriptiveJob(job, "DART 재무정보(단일회사) 배치 처리", java.util.List.of(
+                new JobParamSpec("corp_code", "DART 고유번호", "8자리 숫자", "", true),
+                new JobParamSpec("bsns_year", "사업연도", "yyyy", "", true),
+                new JobParamSpec("reprt_code", "보고서 코드", "11011=사업, 11012=반기, 11013=1분기, 11014=3분기", "11011", true)
+        ));
     }
 
 

@@ -4,8 +4,8 @@
     <springProperty scope="context" name="LOG_PATH" source="logging.file.path" defaultValue="./logs/mony_batch"/>
     <springProperty scope="context" name="ACTIVE_PROFILE" source="spring.profiles.active" defaultValue="local"/>
 
-    <property name="LOG_FILE_NAME" value="SYSTEM"/>
-    <property name="JSON_LOG_FILE_NAME" value="SYSTEM-json"/>
+    <!-- DOMAIN MDC 값이 없으면(배치 Job 컨텍스트 밖) system으로 분류 -->
+    <property name="DEFAULT_DOMAIN" value="system"/>
 
     <!-- Console appender (사람이 읽기 편한 포맷) -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
@@ -14,46 +14,63 @@
         </encoder>
     </appender>
 
-    <!-- 일반 텍스트 파일 appender (사람이 읽기 편한 포맷) -->
-    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/${LOG_FILE_NAME}.log</file>
-        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <Pattern>[%d{yyyy.MM.dd HH:mm:ss.SSS}][%-5level] [%X{JOB_NAME}] [%X{STEP_NAME}] [%logger{5}] - %msg%n</Pattern>
-        </encoder>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/${LOG_FILE_NAME}.%d{yyyy-MM-dd}_%i.log</fileNamePattern>
-            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-                <maxFileSize>10MB</maxFileSize>
-            </timeBasedFileNamingAndTriggeringPolicy>
-            <maxHistory>30</maxHistory>
-        </rollingPolicy>
+    <!-- 일반 텍스트 파일 appender - DOMAIN(dart/stock/news/report/event/system)별로 파일 분리 -->
+    <appender name="FILE" class="ch.qos.logback.classic.sift.SiftingAppender">
+        <discriminator class="ch.qos.logback.classic.sift.MDCBasedDiscriminator">
+            <key>DOMAIN</key>
+            <defaultValue>${DEFAULT_DOMAIN}</defaultValue>
+        </discriminator>
+        <sift>
+            <appender name="FILE-${DOMAIN}" class="ch.qos.logback.core.rolling.RollingFileAppender">
+                <file>${LOG_PATH}/${DOMAIN}.log</file>
+                <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+                    <Pattern>[%d{yyyy.MM.dd HH:mm:ss.SSS}][%-5level] [%X{JOB_NAME}] [%X{STEP_NAME}] [%logger{5}] - %msg%n</Pattern>
+                </encoder>
+                <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                    <fileNamePattern>${LOG_PATH}/${DOMAIN}.%d{yyyy-MM-dd}_%i.log</fileNamePattern>
+                    <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                        <maxFileSize>10MB</maxFileSize>
+                    </timeBasedFileNamingAndTriggeringPolicy>
+                    <maxHistory>30</maxHistory>
+                </rollingPolicy>
+            </appender>
+        </sift>
     </appender>
 
-    <!-- JSON 파일 appender - Filebeat가 이 파일을 읽어 Elasticsearch로 전송 -->
-    <appender name="JSON_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/json/${JSON_LOG_FILE_NAME}.log</file>
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <!-- 공통 필드 -->
-            <customFields>{"app":"mony-batch","env":"${ACTIVE_PROFILE}"}</customFields>
-            <!-- MDC 필드 (배치 컨텍스트) -->
-            <includeMdcKeyName>JOB_NAME</includeMdcKeyName>
-            <includeMdcKeyName>JOB_INSTANCE_ID</includeMdcKeyName>
-            <includeMdcKeyName>STEP_NAME</includeMdcKeyName>
-            <includeMdcKeyName>USER_ID</includeMdcKeyName>
-            <!-- 스택트레이스 포함 -->
-            <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
-                <maxDepthPerCause>10</maxDepthPerCause>
-                <shortenedClassNameLength>40</shortenedClassNameLength>
-                <rootCauseFirst>true</rootCauseFirst>
-            </throwableConverter>
-        </encoder>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/json/${JSON_LOG_FILE_NAME}.%d{yyyy-MM-dd}_%i.log</fileNamePattern>
-            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-                <maxFileSize>10MB</maxFileSize>
-            </timeBasedFileNamingAndTriggeringPolicy>
-            <maxHistory>30</maxHistory>
-        </rollingPolicy>
+    <!-- JSON 파일 appender - Filebeat가 이 파일을 읽어 Elasticsearch로 전송. DOMAIN별로 파일 분리 -->
+    <appender name="JSON_FILE" class="ch.qos.logback.classic.sift.SiftingAppender">
+        <discriminator class="ch.qos.logback.classic.sift.MDCBasedDiscriminator">
+            <key>DOMAIN</key>
+            <defaultValue>${DEFAULT_DOMAIN}</defaultValue>
+        </discriminator>
+        <sift>
+            <appender name="JSON-${DOMAIN}" class="ch.qos.logback.core.rolling.RollingFileAppender">
+                <file>${LOG_PATH}/json/${DOMAIN}-json.log</file>
+                <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                    <!-- 공통 필드 -->
+                    <customFields>{"app":"mony-batch","env":"${ACTIVE_PROFILE}"}</customFields>
+                    <!-- MDC 필드 (배치 컨텍스트) -->
+                    <includeMdcKeyName>JOB_NAME</includeMdcKeyName>
+                    <includeMdcKeyName>JOB_INSTANCE_ID</includeMdcKeyName>
+                    <includeMdcKeyName>STEP_NAME</includeMdcKeyName>
+                    <includeMdcKeyName>USER_ID</includeMdcKeyName>
+                    <includeMdcKeyName>DOMAIN</includeMdcKeyName>
+                    <!-- 스택트레이스 포함 -->
+                    <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                        <maxDepthPerCause>10</maxDepthPerCause>
+                        <shortenedClassNameLength>40</shortenedClassNameLength>
+                        <rootCauseFirst>true</rootCauseFirst>
+                    </throwableConverter>
+                </encoder>
+                <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                    <fileNamePattern>${LOG_PATH}/json/${DOMAIN}-json.%d{yyyy-MM-dd}_%i.log</fileNamePattern>
+                    <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                        <maxFileSize>10MB</maxFileSize>
+                    </timeBasedFileNamingAndTriggeringPolicy>
+                    <maxHistory>30</maxHistory>
+                </rollingPolicy>
+            </appender>
+        </sift>
     </appender>
 
     <!-- JSON appender 비동기 래핑 (I/O 블로킹 방지) -->

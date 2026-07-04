@@ -6,7 +6,7 @@ import app.monybatch.mony.batch.news.reader.CompositeNewsReader;
 import app.monybatch.mony.batch.news.reader.RssItemReader;
 import app.monybatch.mony.batch.news.writer.NewsItemWriter;
 import app.monybatch.mony.batch.support.parameter.DescriptiveJob;
-import app.monybatch.mony.common.core.utils.DateUtil;
+import app.monybatch.mony.batch.support.parameter.JobParamSpec;
 import app.monybatch.mony.common.core.utils.HashUtil;
 import app.monybatch.mony.domian.news.entity.NewsDto;
 import app.monybatch.mony.domian.news.entity.NewsRss;
@@ -18,8 +18,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.batch.core.Job;
-import org.springframework.batch.core.JobParameters;
-import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.DuplicateJobException;
 import org.springframework.batch.core.configuration.JobRegistry;
@@ -27,7 +25,6 @@ import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.configuration.support.ReferenceJobFactory;
 import org.springframework.batch.core.job.DefaultJobParametersValidator;
 import org.springframework.batch.core.job.builder.JobBuilder;
-import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
@@ -36,7 +33,6 @@ import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.support.CompositeItemProcessor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import java.util.ArrayList;
@@ -50,7 +46,6 @@ public class NewsJob {
     // --- 주입되는 컴포넌트 ---
     private final JobRepository jobRepository;
     private final JobRegistry jobRegistry;
-    private final JobLauncher jobLauncher; // JobLauncher 주입
     private final NewsArticleRepository newsRepository;
     private final NewsRSSRepository newsRssRepository;
     private final PlatformTransactionManager batchTransactionManager;
@@ -58,20 +53,7 @@ public class NewsJob {
     private final VectorStore vectorStore; // VectorStore 주입 추가
     private final NewsParserFactory parserFactory; // VectorStore 주입 추가
 
-    // --- 스케줄러 (5분마다 실행) ---
-    @Scheduled(cron = "0 */10 * * * *") // 5분마다 실행
-    public void runNewsCollectionJob() {
-        try {
-            JobParameters jobParameters = new JobParametersBuilder()
-                    .addString("basDd", DateUtil.getDateYmd())
-                    .addLong("time", System.currentTimeMillis()) // JobInstance를 다르게 하기 위해 현재 시간을 파라미터로 추가
-                    .toJobParameters();
-            jobLauncher.run(newsCollectionJob().getJob(), jobParameters);
-        } catch (Exception e) {
-            log.error("Error running newsCollectionJob", e);
-        }
-    }
-
+    // 실행 주기는 모니터링 화면의 스케줄 설정(batch_schedule_config)에서 관리 — DynamicBatchScheduler 참고
 
     // --- Job 정의 ---
     @Bean
@@ -87,7 +69,9 @@ public class NewsJob {
                 .start(batchNewsStep())
                 .build();
         jobRegistry.register(new ReferenceJobFactory(job));
-        return new DescriptiveJob(job, "RSS 뉴스 수집 및 AI 요약 배치");
+        return new DescriptiveJob(job, "RSS 뉴스 수집 및 AI 요약 배치", List.of(
+                new JobParamSpec("basDd", "기준일자 (빈값이면 오늘)", "yyyyMMdd", "", false)
+        ));
     }
 
     // --- Step 정의 ---
