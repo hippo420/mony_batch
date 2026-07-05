@@ -25,7 +25,7 @@ import java.math.BigDecimal;
                 /**
                  * 공시 접수번호 조회용
                  */
-                @Index(name = "idx_dart_rcept_no",columnList = "rcept_no"),
+                @Index(name = "idx_dart_account_rcept_no",columnList = "rcept_no"),
 
                 /**
                  * 특정 계정 검색용 (예: 자본총계)

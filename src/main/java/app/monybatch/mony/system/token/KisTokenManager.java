@@ -102,7 +102,7 @@ public class KisTokenManager {
                 log.error("Failed to issue KIS Access Token: Invalid response from API");
             }
         } catch (WebClientResponseException e){
-            // ✅ 여기서 서버가 보낸 실제 에러 내용을 확인할 수 있습니다.
+            // 여기서 서버가 보낸 실제 에러 내용을 확인할 수 있습니다.
             String errorBody = e.getResponseBodyAsString();
             String decodedMessage = new String(errorBody.getBytes(Charset.forName("EUC-KR")));
             log.error("### KIS API 에러 발생 ###");
