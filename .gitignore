@@ -19,6 +19,7 @@ logs/
 elk/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
+docs
 
 ### IntelliJ IDEA ###
 .idea
